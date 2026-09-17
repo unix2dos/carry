@@ -1,0 +1,29 @@
+{
+  "started_at": "2026-09-16T12:34:00.816415+00:00",
+  "finished_at": "2026-09-16T12:35:54.284340+00:00",
+  "status": "paused_unexpected_configuration_behavior",
+  "scope": "isolated personal Go validation service",
+  "fault": {
+    "variable": "PORT",
+    "baseline_value": "8080",
+    "test_value": "invalid-port",
+    "variable_readback_confirmed": true,
+    "deployment_id": "3081f646-b7c1-4ab6-9e08-e34acd889359",
+    "observed_deployment_status": "SUCCESS",
+    "expected_startup_failure_observed": false
+  },
+  "restoration": {
+    "variable_readback": "8080",
+    "deployment_id": "3f707788-9b0e-48bb-9bde-b3d73db2a58d",
+    "deployment_status": "SUCCESS",
+    "full_http_and_database_probe_passed": true,
+    "retained_record_preserved": true,
+    "temporary_record_removed": true,
+    "transport_retries": 0
+  },
+  "other_application_variables_unchanged": true,
+  "resource_identity_preserved": true,
+  "paid_plan_enabled": false,
+  "conclusion": "The intended configuration fault was not reproduced. A successful redeploy does not establish that a staged variable change was applied to that deployment. The effective configuration and provider semantics still require read-only investigation.",
+  "next_step": "Pause further changes; discuss read-only verification of effective deployment configuration and the supported method for applying changed variables."
+}

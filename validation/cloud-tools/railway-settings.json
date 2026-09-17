@@ -1,0 +1,14 @@
+{
+  "service": {
+    "numReplicas": 1,
+    "healthcheckPath": "/healthz",
+    "healthcheckTimeout": 120,
+    "sleepApplication": true,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  },
+  "limits": {
+    "vCPUs": 0.25,
+    "memoryGB": 0.25
+  }
+}

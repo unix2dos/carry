@@ -1,0 +1,132 @@
+{
+  "recorded_at": "2026-09-17T05:16:30.723485+00:00",
+  "status": "internal_alpha_validated",
+  "host": "macOS arm64",
+  "implementation": "Go standard library plus pinned official Railway and Neon CLIs",
+  "implemented": [
+    "existing-resource project registration and scoped publishing authorization",
+    "live resource ownership and billing preflight",
+    "authenticated loopback-only web UI",
+    "source upload with captured-source digest",
+    "private durable operation records and per-project local locks",
+    "cross-process and CLI-to-web reconciliation without resubmission",
+    "known-credential log redaction",
+    "explicit application HTTP checks",
+    "repository-bundled Agent Skill"
+  ],
+  "automated_checks": {
+    "go_test_race": "passed",
+    "go_vet": "passed",
+    "javascript_syntax": "passed",
+    "test_groups": 8,
+    "skill_yaml": "Ruby safe_load passed; official Python validator unavailable because PyYAML is not installed"
+  },
+  "live_checks": {
+    "cli_registration_status_logs": "passed",
+    "cli_detached_publish_then_new_process_reconcile": "passed",
+    "duplicate_publish_blocked_before_upload": true,
+    "web_publish": "passed",
+    "cli_submission_resumed_from_restarted_web_ui": "passed",
+    "live_api_anonymous_status": 401,
+    "live_api_foreign_origin_status": 403,
+    "live_api_authenticated_status": 200,
+    "known_cloud_credentials_absent_from_local_records": true,
+    "original_fixture_hashes_unchanged": 20,
+    "v3_application_probe": {
+      "version": "v3",
+      "full_probe_passed": true,
+      "root_status_response_passed": true,
+      "retained_record_preserved": true,
+      "temporary_record_removed": true,
+      "transport_retries": 0,
+      "duration_seconds": 16.296
+    }
+  },
+  "operations": [
+    {
+      "id": "1789618438555677000-5709466ebde8e3fe",
+      "marker": "pdeploy:1789618438555677000-5709466ebde8e3fe",
+      "state": "deployed",
+      "deployment_id": "ace9d658-4f57-40e4-9394-019715d471c8",
+      "provider_state": "SUCCESS",
+      "source_sha256": "3f4d127093fc41c012536efd2102d8010a84e47993a02fd219780f20bcce9943",
+      "source_files": 5,
+      "created_at": "2026-09-17T04:13:58.555677Z",
+      "updated_at": "2026-09-17T04:15:55.469388Z",
+      "checks": [
+        {
+          "path": "/healthz",
+          "ok": true,
+          "http_status": 200,
+          "version": "v2"
+        },
+        {
+          "path": "/readyz",
+          "ok": true,
+          "http_status": 200
+        }
+      ],
+      "checks_at": null
+    },
+    {
+      "id": "1789619034639500000-217cba13d67fc5a6",
+      "marker": "pdeploy:1789619034639500000-217cba13d67fc5a6",
+      "state": "deployed",
+      "deployment_id": "ab524e7d-1c94-41df-bf9b-1d5a27a9c412",
+      "provider_state": "SUCCESS",
+      "source_sha256": "3f4d127093fc41c012536efd2102d8010a84e47993a02fd219780f20bcce9943",
+      "source_files": 5,
+      "created_at": "2026-09-17T04:23:54.6395Z",
+      "updated_at": "2026-09-17T04:24:48.206661Z",
+      "checks": [
+        {
+          "path": "/healthz",
+          "ok": true,
+          "http_status": 200,
+          "version": "v2"
+        },
+        {
+          "path": "/readyz",
+          "ok": true,
+          "http_status": 200
+        }
+      ],
+      "checks_at": null
+    },
+    {
+      "id": "1789619717423761000-83438a92603d9355",
+      "marker": "pdeploy:1789619717423761000-83438a92603d9355",
+      "state": "deployed",
+      "deployment_id": "df42d34d-ee5e-4a0a-9837-9313a5a18056",
+      "provider_state": "SUCCESS",
+      "source_sha256": "a28ff64c99cb8f663b622b4c94692dab67913961f3a610f2cd48ec60d54fdd14",
+      "source_files": 5,
+      "created_at": "2026-09-17T04:35:17.423761Z",
+      "updated_at": "2026-09-17T04:51:41.327401Z",
+      "checks": [
+        {
+          "path": "/healthz",
+          "ok": true,
+          "http_status": 200,
+          "version": "v3"
+        },
+        {
+          "path": "/readyz",
+          "ok": true,
+          "http_status": 200
+        }
+      ],
+      "checks_at": null
+    }
+  ],
+  "limitations": [
+    "Current validated write path is explicitly accepted Railway Trial plus Neon Free; formal Free write eligibility is not claimed.",
+    "No automatic cloud resource creation, general resource adoption, billing changes, deletion or database migration.",
+    "No public installer or independent external-user reproduction yet.",
+    "Only macOS arm64 has been run; no cross-Agent compatibility claim.",
+    "Real abrupt process termination during an uncertain cloud submission was not injected; lost-response reconciliation was tested with an isolated provider seam.",
+    "Earlier PORT snapshot/runtime discrepancy remains unresolved."
+  ],
+  "binary_sha256": "297357f78b086a1ce0a6d0b16132c0432be0ddce71870621320a8adb38dd1496",
+  "public_artifacts_secret_check": "passed"
+}

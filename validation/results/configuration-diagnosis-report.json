@@ -1,0 +1,71 @@
+{
+  "recorded_at": "2026-09-16T13:03:39.290844+00:00",
+  "scope": "read-only investigation of the prior isolated fault attempt",
+  "cli_version": "5.57.2",
+  "fault_deployment": "3081f646-b7c1-4ab6-9e08-e34acd889359",
+  "saved_variable_at_fault": "invalid-port",
+  "snapshot_summary": {
+    "at": "2026-09-16T12:54:48.698051+00:00",
+    "current_saved_port": "8080",
+    "snapshots": {
+      "baseline": {
+        "snapshot_id": "37c7fbc5-425e-4805-8dde-ef19678e7084",
+        "created_at": "2026-09-16T07:32:29.432Z",
+        "port": "8080",
+        "app_version": null,
+        "database_matches_recorded": true,
+        "token_matches_recorded": true
+      },
+      "test": {
+        "snapshot_id": "862adb09-cfd7-4756-8565-d9701ac31222",
+        "created_at": "2026-09-16T12:34:20.470Z",
+        "port": "invalid-port",
+        "app_version": null,
+        "database_matches_recorded": true,
+        "token_matches_recorded": true
+      },
+      "recovery": {
+        "snapshot_id": "41759a92-e7f2-4e95-a79e-5c2f839b04e8",
+        "created_at": "2026-09-16T12:35:09.722Z",
+        "port": "8080",
+        "app_version": null,
+        "database_matches_recorded": true,
+        "token_matches_recorded": true
+      }
+    }
+  },
+  "fault_deployment_runtime_log": [
+    {
+      "timestamp": "2026-09-16T12:34:41.367173421Z",
+      "event": "listening",
+      "language": "go",
+      "port": 8080
+    }
+  ],
+  "findings": [
+    "The invalid value is present in the fault deployment snapshot; a claim that only the previous variable snapshot was reused is contradicted.",
+    "The log requested for the exact fault deployment reports listening on port 8080.",
+    "The source rejects a nonnumeric PORT, so the saved snapshot alone does not establish the effective value seen by this process.",
+    "The mechanism responsible for this PORT difference is not yet established."
+  ],
+  "cli_implementation": {
+    "source": "https://github.com/railwayapp/cli/blob/v5.57.2/src/commands/redeploy.rs",
+    "default_mutation": "deploymentRedeploy(id)",
+    "from_source_behavior": "ServiceInstanceDeployLatestCommit; not used during this investigation"
+  },
+  "mutations_executed": false,
+  "proposed_next_experiment": {
+    "variable": "DATABASE_SSLMODE",
+    "baseline": "verify-full",
+    "fault_value": "invalid-mode",
+    "expected_behavior": "Fixture exits with invalid_configuration before any database connection.",
+    "restore": "verify-full",
+    "status": "proposed_not_executed"
+  },
+  "sources": [
+    "https://docs.railway.com/guides/variables",
+    "https://docs.railway.com/cli/redeploy",
+    "https://docs.railway.com/deployments/staged-changes",
+    "https://docs.railway.com/integrations/api/manage-deployments"
+  ]
+}

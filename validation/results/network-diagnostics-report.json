@@ -1,0 +1,89 @@
+{
+  "recorded_at": "2026-09-16T09:49:59.462138+00:00",
+  "target": "https://demo.readwrite.fun",
+  "total_requests": 34,
+  "retries_per_request": 0,
+  "observations": [
+    {
+      "mode": "no-explicit-proxy",
+      "path": "/healthz",
+      "requests": 6,
+      "passed": 6,
+      "failed": 0,
+      "median_success_seconds": 0.478,
+      "failure_stages": []
+    },
+    {
+      "mode": "no-explicit-proxy",
+      "path": "/readyz",
+      "requests": 6,
+      "passed": 5,
+      "failed": 1,
+      "median_success_seconds": 0.672,
+      "failure_stages": [
+        {
+          "curl_exit": 28,
+          "http_status": 0,
+          "http_connect": 0,
+          "tls_completed": false,
+          "error": "curl: (28) SSL connection timeout"
+        }
+      ]
+    },
+    {
+      "mode": "pinned",
+      "path": "/healthz",
+      "requests": 6,
+      "passed": 6,
+      "failed": 0,
+      "median_success_seconds": 0.519,
+      "failure_stages": []
+    },
+    {
+      "mode": "pinned",
+      "path": "/readyz",
+      "requests": 6,
+      "passed": 6,
+      "failed": 0,
+      "median_success_seconds": 0.629,
+      "failure_stages": []
+    },
+    {
+      "mode": "proxy",
+      "path": "/healthz",
+      "requests": 10,
+      "passed": 9,
+      "failed": 1,
+      "median_success_seconds": 0.51,
+      "failure_stages": [
+        {
+          "curl_exit": 28,
+          "http_status": 0,
+          "http_connect": 200,
+          "tls_completed": false,
+          "error": "curl: (28) SSL connection timeout"
+        }
+      ]
+    }
+  ],
+  "route_facts": {
+    "explicit_http_proxy_configured": true,
+    "macos_system_proxy_switches_enabled": false,
+    "target_public_ip_route_uses_tun": true,
+    "no_explicit_proxy_uses_fake_ip": true,
+    "fixed_public_ip_still_uses_tun": true
+  },
+  "conclusions": [
+    "TLS timeout reproduced before any HTTP response, with and without explicit HTTP proxy.",
+    "Pinned public-IP health and readiness checks passed 12/12; small samples and later readiness timing prevent a definitive root-cause claim.",
+    "Successful responses prove the domain, certificate, Go v2 and PostgreSQL readiness are reachable.",
+    "There was no independent non-TUN direct-egress control; local routing/proxy effects cannot be separated conclusively from upstream or remote-edge intermittency."
+  ],
+  "changes": {
+    "system_proxy_settings": false,
+    "dns_settings": false,
+    "application_configuration": false,
+    "fault_injection": false
+  },
+  "next_step": "Pause before fault injection; user can switch proxy node for an identical comparison, or authorize further read-only rule inspection."
+}

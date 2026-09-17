@@ -1,0 +1,197 @@
+{
+  "run_id": "pdv-cloud-20260916-go",
+  "completed_at": "2026-09-16T07:34:36.380661+00:00",
+  "language": "go",
+  "url": "https://go-web-production-76e2.up.railway.app",
+  "cloud_executed": true,
+  "formal_free_validated": false,
+  "preflight": {
+    "date": "2026-09-16",
+    "authentication": {
+      "railway": "success",
+      "neon": "success",
+      "personal_targets_only": true
+    },
+    "railway": {
+      "display_plan": "Trial",
+      "api_plan": "HOBBY",
+      "is_trialing": true,
+      "trial_days_remaining_at_preflight": 30,
+      "credit_balance_usd_at_preflight": 5,
+      "is_usage_subscriber": false,
+      "has_default_payment_method": false,
+      "account_verification": "confirmed by official Plans page",
+      "formal_free_validated": false,
+      "project_created": true,
+      "service_created": true
+    },
+    "neon": {
+      "organization_plan": "free",
+      "project_created": true,
+      "postgres_version": 16,
+      "region": "aws-us-west-2",
+      "min_cu": 0.25,
+      "max_cu": 0.25
+    },
+    "notes": [
+      "Railway API plan=HOBBY does not distinguish trial from paid subscription; combine it with customer.isTrialing and the Plans page.",
+      "Railway CLI requests intermittently timed out. Read back state before retrying changes.",
+      "No billing upgrade or payment method was added."
+    ]
+  },
+  "resources": {
+    "railway_project_id": "example-railway-project",
+    "railway_service_id": "example-railway-service",
+    "neon_project_id": "example-neon-project",
+    "retained_for_follow_up": true
+  },
+  "deployments": [
+    {
+      "id": "ce326135-47ae-45cd-a48d-68e598bcdafe",
+      "last_observed_status": "REMOVED",
+      "created_at": "2026-09-16T07:19:50.263Z",
+      "image_digest": "sha256:f3e883f254f76bd3997bb515ebe2ad7f25077ba551b2e561348e9e38cd80bd81"
+    },
+    {
+      "id": "009b7c0b-92b5-4374-a5d8-60be66751b3a",
+      "last_observed_status": "REMOVED",
+      "created_at": "2026-09-16T07:26:59.196Z",
+      "image_digest": "sha256:a0c691386fb3e1103e31a39b506c371004a4b5ce68aa1d54787f08f4cddf700f"
+    },
+    {
+      "id": "ba361082-bcbe-4668-876e-db1782ac8db4",
+      "last_observed_status": "SUCCESS",
+      "created_at": "2026-09-16T07:32:27.348Z",
+      "image_digest": "sha256:a0c691386fb3e1103e31a39b506c371004a4b5ce68aa1d54787f08f4cddf700f"
+    }
+  ],
+  "effective_build": {
+    "buildCommand": null,
+    "buildEnvironment": "V3",
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "/Dockerfile",
+    "nixpacksConfigPath": null,
+    "nixpacksPlan": null,
+    "watchPatterns": []
+  },
+  "effective_deploy": {
+    "cronSchedule": null,
+    "drainingSeconds": null,
+    "healthcheckPath": "/healthz",
+    "healthcheckTimeout": 120,
+    "ipv6EgressEnabled": false,
+    "limitOverride": {
+      "containers": {
+        "cpu": 0.25,
+        "memoryBytes": 250000000
+      }
+    },
+    "multiRegionConfig": {
+      "sfo": {
+        "numReplicas": 1
+      }
+    },
+    "numReplicas": 1,
+    "overlapSeconds": null,
+    "preDeployCommand": null,
+    "preDeployTimeoutSeconds": null,
+    "region": null,
+    "registryCredentials": null,
+    "requiredMountPath": null,
+    "restartPolicyMaxRetries": 3,
+    "restartPolicyType": "ON_FAILURE",
+    "runtime": "V2",
+    "sleepApplication": true,
+    "startCommand": null,
+    "useLegacyStacker": false
+  },
+  "checks": [
+    {
+      "stage": "v1",
+      "passed": true,
+      "transport": "curl; TLS verified; no redirects",
+      "transport_retries": 1,
+      "at": "2026-09-16T07:26:34.690339+00:00",
+      "duration_seconds": 28.73,
+      "checks": [
+        "HTTPS health and version",
+        "PostgreSQL readiness",
+        "bearer authentication",
+        "input bounds and UTF-8",
+        "parameterized SQL round trip",
+        "idempotent upsert",
+        "record retained for update check"
+      ]
+    },
+    {
+      "source_update_v2_visible": true,
+      "previous_record_preserved": true,
+      "transport_retries": 0
+    },
+    {
+      "stage": "final-v2",
+      "passed": true,
+      "at": "2026-09-16T07:34:36.380661+00:00",
+      "duration_seconds": 11.15,
+      "transport_retries": 0,
+      "checks": [
+        "existing record survived source update and configuration deployment",
+        "full remote fixture probe",
+        "temporary probe record removed",
+        "different v1/v2 cloud image digests",
+        "effective sleep, healthcheck, restart policy and resource limits",
+        "original local validation sources unchanged"
+      ]
+    }
+  ],
+  "runtime_logs": {
+    "read_succeeded": true,
+    "secret_found_in_sample": false
+  },
+  "usage_snapshot": {
+    "at": "2026-09-16T07:31:39.481008+00:00",
+    "data": {
+      "customer": {
+        "creditBalance": 5,
+        "currentUsage": 2.4805107654320988e-05,
+        "isTrialing": true,
+        "isUsageSubscriber": false,
+        "hasDefaultPaymentMethod": false
+      },
+      "plan": "HOBBY",
+      "projectCount": 1
+    },
+    "note": "Provider currentUsage is cached, is not the final billed amount, and this snapshot preceded the last deployment."
+  },
+  "source_sha256": {
+    "v1": {
+      "go.mod": "00e052453be733267f429cb8059aede1de6b18bd1190fc50af17d60d34f42701",
+      "Dockerfile": "9e01aea4244b4eb384686fa84b6c075359ee1966b258b952787659c36ca94261",
+      "go.sum": "4e7e05768d607a1cc09d1dbe92d138751e9111200e8eadf2be5d7c99b189e834",
+      ".dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+      "main.go": "98f0c28195cec790d9f83a49d32a07acaea6ee59d86434228c33f7c3dfb49730",
+      "railway.json": "abe601e03d1bdfbcdfbd92508d657d27040a1e1f83960a76f72d39678d619f32"
+    },
+    "v2": {
+      "go.mod": "00e052453be733267f429cb8059aede1de6b18bd1190fc50af17d60d34f42701",
+      "Dockerfile": "9e01aea4244b4eb384686fa84b6c075359ee1966b258b952787659c36ca94261",
+      "go.sum": "4e7e05768d607a1cc09d1dbe92d138751e9111200e8eadf2be5d7c99b189e834",
+      ".dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+      "main.go": "83bbdf25f705a34474070d3ea43404d153869bb56e17c4514c74a7ef8213ebd7",
+      "railway.json": "abe601e03d1bdfbcdfbd92508d657d27040a1e1f83960a76f72d39678d619f32"
+    },
+    "final": {
+      "go.mod": "00e052453be733267f429cb8059aede1de6b18bd1190fc50af17d60d34f42701",
+      "Dockerfile": "9e01aea4244b4eb384686fa84b6c075359ee1966b258b952787659c36ca94261",
+      "go.sum": "4e7e05768d607a1cc09d1dbe92d138751e9111200e8eadf2be5d7c99b189e834",
+      ".dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+      "main.go": "83bbdf25f705a34474070d3ea43404d153869bb56e17c4514c74a7ef8213ebd7"
+    }
+  },
+  "limitations": [
+    "Only Go was deployed to the cloud; the four-language matrix remains local validation.",
+    "Trial success does not establish Railway formal Free eligibility.",
+    "Cold-start timing, actual sleep transitions, quota exhaustion, monthly cost and cloud failure recovery were not tested.",
+    "No cloud-to-cloud database migration or formal local management service/UI/Agent interface was tested."
+  ]
+}

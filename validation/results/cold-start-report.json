@@ -1,0 +1,66 @@
+{
+  "started_at": "2026-09-16T12:25:57.674519+00:00",
+  "finished_at": "2026-09-16T12:33:11.713103+00:00",
+  "last_application_probe_ended_at": "2026-09-16T12:22:39.310261+00:00",
+  "natural_sleep_observed": true,
+  "passed": true,
+  "railway_first_sleep_observation": {
+    "at": "2026-09-16T12:33:08.492979+00:00",
+    "status": "SLEEPING",
+    "stopped": true,
+    "deploymentId": "ba361082-bcbe-4668-876e-db1782ac8db4"
+  },
+  "neon_first_idle_observation": {
+    "at": "2026-09-16T12:28:21.843259+00:00",
+    "current_state": "idle",
+    "pending_state": null
+  },
+  "railway_first_sleep_observed_after_seconds": 629.183,
+  "first_request": {
+    "at": "2026-09-16T12:33:08.493788+00:00",
+    "path": "/readyz",
+    "retries": 0,
+    "ip_pinning": false,
+    "curl_exit": 0,
+    "error": "",
+    "http_code": 200,
+    "ssl_verify_result": 0,
+    "time_connect": 0.000248,
+    "time_appconnect": 0.277027,
+    "time_starttransfer": 2.501805,
+    "time_total": 2.50186,
+    "proxy_used": 1,
+    "body": {
+      "status": "ready"
+    },
+    "passed": true
+  },
+  "health_after_wake": {
+    "at": "2026-09-16T12:33:11.012904+00:00",
+    "path": "/healthz",
+    "retries": 0,
+    "ip_pinning": false,
+    "curl_exit": 0,
+    "error": "",
+    "http_code": 200,
+    "ssl_verify_result": 0,
+    "time_connect": 0.000297,
+    "time_appconnect": 0.430011,
+    "time_starttransfer": 0.688209,
+    "time_total": 0.688257,
+    "proxy_used": 1,
+    "body": {
+      "language": "go",
+      "status": "ok",
+      "version": "v2"
+    },
+    "passed": true
+  },
+  "limitations": [
+    "One natural sleep/wake sample; not a latency percentile or availability guarantee.",
+    "Management state was sampled periodically; observation time is not the exact moment of transition.",
+    "End-to-end readiness timing includes network, app start and database availability; component timings were not isolated."
+  ],
+  "network_configuration_changed": false,
+  "service_restarted_manually": false
+}

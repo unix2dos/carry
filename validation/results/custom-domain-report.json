@@ -1,0 +1,50 @@
+{
+  "recorded_at": "2026-09-16T09:35:31.646701+00:00",
+  "domain": "demo.readwrite.fun",
+  "role": "user-owned domain validation; not a required author-hosted domain service",
+  "ownership_verified": true,
+  "certificate": {
+    "status": "CERTIFICATE_STATUS_TYPE_VALID",
+    "detailedStatus": "CERTIFICATE_STATUS_TYPE_DETAILED_COMPLETE"
+  },
+  "cname_target": "814hh296.up.railway.app",
+  "ownership_txt_added": true,
+  "proxy_enabled": false,
+  "https_checks": {
+    "observed_at": "2026-09-16T09:32:34.705400+00:00",
+    "url": "https://demo.readwrite.fun",
+    "attempts": [
+      {
+        "path": "/healthz",
+        "curl_exit": 0,
+        "body": {
+          "language": "go",
+          "status": "ok",
+          "version": "v2"
+        },
+        "http_code": 200,
+        "ssl_verify_result": 0,
+        "time_namelookup": 7.5e-05,
+        "time_connect": 0.000265,
+        "time_appconnect": 1.3793,
+        "time_starttransfer": 1.607587,
+        "time_total": 1.607853,
+        "num_redirects": 0
+      },
+      {
+        "path": "/readyz",
+        "curl_exit": 28,
+        "error": "curl: (28) SSL connection timeout"
+      }
+    ],
+    "retries": 0,
+    "cold_start_claim": false,
+    "reason": "Railway status was SUCCESS before HTTP requests; earlier SLEEPING snapshot does not establish this was a cold request."
+  },
+  "neon_management_recheck_succeeded": true,
+  "neon_compute_state_at_management_recheck": "idle",
+  "overall_acceptance_complete": false,
+  "cold_start_test_complete": false,
+  "fault_recovery_test_started": false,
+  "pause_reason": "Database readiness request did not complete TLS handshake from this host; no HTTP response obtained. Root cause not established."
+}

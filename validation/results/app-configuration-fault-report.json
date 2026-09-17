@@ -1,0 +1,86 @@
+{
+  "started_at": "2026-09-16T13:27:01.070776+00:00",
+  "finished_at": "2026-09-16T13:30:23.255437+00:00",
+  "status": "passed",
+  "scope": "single isolated personal Go validation service",
+  "baseline_checks_passed": true,
+  "fault": {
+    "variable": "DATABASE_SSLMODE",
+    "baseline": "verify-full",
+    "test_value": "invalid-mode",
+    "deployment_id": "d08b2104-1354-4611-a1a9-0eca017b514f",
+    "deployment_status": "FAILED",
+    "snapshot": {
+      "deployment_id": "d08b2104-1354-4611-a1a9-0eca017b514f",
+      "snapshot_id": "d389dbc9-5e70-4d0d-89fd-ed6ed82d0662",
+      "created_at": "2026-09-16T13:27:27.330Z",
+      "port": "8080",
+      "database_sslmode": "invalid-mode",
+      "database_matches_recorded": true,
+      "token_matches_recorded": true
+    },
+    "expected_failure_observed": true,
+    "runtime_log_events": [
+      {
+        "timestamp": "2026-09-16T13:27:39.317130667Z",
+        "error": "invalid_configuration"
+      },
+      {
+        "timestamp": "2026-09-16T13:27:39.317133107Z",
+        "error": "invalid_configuration"
+      },
+      {
+        "timestamp": "2026-09-16T13:27:39.565410463Z",
+        "error": "invalid_configuration"
+      },
+      {
+        "timestamp": "2026-09-16T13:27:40.090782533Z",
+        "error": "invalid_configuration"
+      }
+    ]
+  },
+  "restoration": {
+    "value": "verify-full",
+    "configuration_restored": true,
+    "deployment_id": "1b143804-7f33-42cd-96cd-37b76b3b2c6e",
+    "deployment_status": "SUCCESS",
+    "snapshot": {
+      "deployment_id": "1b143804-7f33-42cd-96cd-37b76b3b2c6e",
+      "snapshot_id": "d4601504-250d-4b70-9799-0527f8f02c6c",
+      "created_at": "2026-09-16T13:29:39.879Z",
+      "port": "8080",
+      "database_sslmode": "verify-full",
+      "database_matches_recorded": true,
+      "token_matches_recorded": true
+    },
+    "full_http_and_database_probe_passed": true,
+    "retained_record_preserved": true,
+    "temporary_record_removed": true,
+    "transport_retries": 0
+  },
+  "resource_identity_preserved": true,
+  "paid_plan_enabled": false,
+  "tls_verification_disabled": false,
+  "port_changed": false,
+  "limitations": [
+    "One controlled application-configuration failure and restoration on Railway Trial plus Neon Free.",
+    "The earlier PORT snapshot versus runtime difference remains unresolved.",
+    "Availability during the failed candidate deployment was not measured; no zero-downtime claim is made.",
+    "This does not prove formal Free eligibility, quota-exhaustion behavior, unattended recovery, or recovery on other providers."
+  ],
+  "account_preflight": {
+    "railway": {
+      "checked_at": "2026-09-16T13:26:18.340840+00:00",
+      "api_plan": "HOBBY",
+      "is_trialing": true,
+      "is_usage_subscriber": false,
+      "has_default_payment_method": false,
+      "formal_free_validated": false
+    },
+    "neon": {
+      "at": "2026-09-16T13:33:12.064996+00:00",
+      "organization_id": "example-neon-org",
+      "plan": "free"
+    }
+  }
+}

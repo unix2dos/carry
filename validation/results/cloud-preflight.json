@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-16",
+  "authentication": {
+    "railway": "success",
+    "neon": "success",
+    "personal_targets_only": true
+  },
+  "railway": {
+    "display_plan": "Trial",
+    "api_plan": "HOBBY",
+    "is_trialing": true,
+    "trial_days_remaining_at_preflight": 30,
+    "credit_balance_usd_at_preflight": 5,
+    "is_usage_subscriber": false,
+    "has_default_payment_method": false,
+    "account_verification": "confirmed by official Plans page",
+    "formal_free_validated": false,
+    "project_created": true,
+    "service_created": true
+  },
+  "neon": {
+    "organization_plan": "free",
+    "project_created": true,
+    "postgres_version": 16,
+    "region": "aws-us-west-2",
+    "min_cu": 0.25,
+    "max_cu": 0.25
+  },
+  "notes": [
+    "Railway API plan=HOBBY does not distinguish trial from paid subscription; combine it with customer.isTrialing and the Plans page.",
+    "Railway CLI requests intermittently timed out. Read back state before retrying changes.",
+    "No billing upgrade or payment method was added."
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "recorded_at": "2026-09-16T12:24:34.505447+00:00",
+  "target": "https://demo.readwrite.fun",
+  "user_reported_proxy_node_switched": true,
+  "total_requests": 36,
+  "passed": 36,
+  "retries_per_request": 0,
+  "tls_verification": true,
+  "observations": [
+    {
+      "path": "/healthz",
+      "mode": "proxy",
+      "requests": 6,
+      "passed": 6,
+      "median_seconds": 0.533
+    },
+    {
+      "path": "/healthz",
+      "mode": "no-explicit-proxy",
+      "requests": 6,
+      "passed": 6,
+      "median_seconds": 0.449
+    },
+    {
+      "path": "/healthz",
+      "mode": "pinned",
+      "requests": 6,
+      "passed": 6,
+      "median_seconds": 0.457
+    },
+    {
+      "path": "/readyz",
+      "mode": "proxy",
+      "requests": 6,
+      "passed": 6,
+      "median_seconds": 0.651
+    },
+    {
+      "path": "/readyz",
+      "mode": "no-explicit-proxy",
+      "requests": 6,
+      "passed": 6,
+      "median_seconds": 0.643
+    },
+    {
+      "path": "/readyz",
+      "mode": "pinned",
+      "requests": 6,
+      "passed": 6,
+      "median_seconds": 0.671
+    }
+  ],
+  "limitations": [
+    "Short samples demonstrate improved reachability, not a definitive root cause or long-term fix.",
+    "Bypassing the explicit HTTP proxy is not proof of independent non-TUN egress.",
+    "Pinned-IP requests are diagnostic only; normal operation continues to use DNS."
+  ],
+  "system_network_settings_changed_by_agent": false,
+  "custom_domain_full_probe": {
+    "started_at": "2026-09-16T12:22:22.546261+00:00",
+    "url": "https://demo.readwrite.fun",
+    "tls_verification": true,
+    "ip_pinning": false,
+    "previous_update_record_preserved": true,
+    "passed": true,
+    "temporary_record_removed": true,
+    "duration_seconds": 16.764,
+    "transport_retries": 0
+  }
+}

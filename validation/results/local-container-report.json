@@ -1,0 +1,174 @@
+{
+  "run_id": "pdv-db190d91e7",
+  "started_at": "2026-09-16T06:38:05.079137+00:00",
+  "platform": "linux/amd64",
+  "checks": [
+    {
+      "name": "go: startup rejects missing validation token",
+      "status": "passed"
+    },
+    {
+      "name": "go: authenticated CRUD, retry, Unicode, SQL parameters, input bounds",
+      "status": "passed"
+    },
+    {
+      "name": "go: changed source, rebuilt/replaced image, changed port, existing data retained",
+      "status": "passed"
+    },
+    {
+      "name": "python: startup rejects missing validation token",
+      "status": "passed"
+    },
+    {
+      "name": "python: authenticated CRUD, retry, Unicode, SQL parameters, input bounds",
+      "status": "passed"
+    },
+    {
+      "name": "python: changed source, rebuilt/replaced image, changed port, existing data retained",
+      "status": "passed"
+    },
+    {
+      "name": "node: startup rejects missing validation token",
+      "status": "passed"
+    },
+    {
+      "name": "node: authenticated CRUD, retry, Unicode, SQL parameters, input bounds",
+      "status": "passed"
+    },
+    {
+      "name": "node: changed source, rebuilt/replaced image, changed port, existing data retained",
+      "status": "passed"
+    },
+    {
+      "name": "rust: startup rejects missing validation token",
+      "status": "passed"
+    },
+    {
+      "name": "rust: authenticated CRUD, retry, Unicode, SQL parameters, input bounds",
+      "status": "passed"
+    },
+    {
+      "name": "rust: changed source, rebuilt/replaced image, changed port, existing data retained",
+      "status": "passed"
+    },
+    {
+      "name": "go: reads records written by all four languages",
+      "status": "passed"
+    },
+    {
+      "name": "python: reads records written by all four languages",
+      "status": "passed"
+    },
+    {
+      "name": "node: reads records written by all four languages",
+      "status": "passed"
+    },
+    {
+      "name": "rust: reads records written by all four languages",
+      "status": "passed"
+    },
+    {
+      "name": "go: database outage reported and recovery without app restart",
+      "status": "passed"
+    },
+    {
+      "name": "python: database outage reported and recovery without app restart",
+      "status": "passed"
+    },
+    {
+      "name": "node: database outage reported and recovery without app restart",
+      "status": "passed"
+    },
+    {
+      "name": "rust: database outage reported and recovery without app restart",
+      "status": "passed"
+    },
+    {
+      "name": "go: default TLS rejects plaintext database, despite URI sslmode=disable and ssl=0",
+      "status": "passed"
+    },
+    {
+      "name": "python: default TLS rejects plaintext database, despite URI sslmode=disable and ssl=0",
+      "status": "passed"
+    },
+    {
+      "name": "node: default TLS rejects plaintext database, despite URI sslmode=disable and ssl=0",
+      "status": "passed"
+    },
+    {
+      "name": "rust: default TLS rejects plaintext database, despite URI sslmode=disable and ssl=0",
+      "status": "passed"
+    },
+    {
+      "name": "go: trusted TLS succeeds; untrusted certificate and wrong hostname rejected",
+      "status": "passed"
+    },
+    {
+      "name": "python: trusted TLS succeeds; untrusted certificate and wrong hostname rejected",
+      "status": "passed"
+    },
+    {
+      "name": "node: trusted TLS succeeds; untrusted certificate and wrong hostname rejected",
+      "status": "passed"
+    },
+    {
+      "name": "rust: trusted TLS succeeds; untrusted certificate and wrong hostname rejected",
+      "status": "passed"
+    },
+    {
+      "name": "migration: stopped writers, pg_dump/restore, exact data match, identity sequence, target-only new write, source retained until cleanup",
+      "status": "passed"
+    }
+  ],
+  "cloud_executed": false,
+  "database": "two disposable local PostgreSQL containers",
+  "status": "passed",
+  "postgres_image": {
+    "id": "sha256:eb9fe6b5815523ffa3e3d8aee9db3532bd564b857634fcfa36979d76bed6ae10",
+    "architecture": "arm64"
+  },
+  "images": {
+    "python": {
+      "v1": {
+        "tag": "personal-deploy-validation/python:pdv-db190d91e7-v1",
+        "id": "sha256:d5f02ed478529c08fa60b6534ae17eb29a20bb4948c037eaf7d93abf57cb7cf4"
+      },
+      "v2": {
+        "tag": "personal-deploy-validation/python:pdv-db190d91e7-v2",
+        "id": "sha256:1b2baca0e6921032ddefe69ef449747b2accd9b54bc3647558ced785b719662c"
+      }
+    },
+    "node": {
+      "v1": {
+        "tag": "personal-deploy-validation/node:pdv-db190d91e7-v1",
+        "id": "sha256:f29582d04ad6aca0428958e5805ff4377343afd26619917c15a56a4c2e6fe9d9"
+      },
+      "v2": {
+        "tag": "personal-deploy-validation/node:pdv-db190d91e7-v2",
+        "id": "sha256:7b78d5536909954830922f17e3617f561ceb1883a0d983441555fefa1e40d6b0"
+      }
+    },
+    "rust": {
+      "v1": {
+        "tag": "personal-deploy-validation/rust:pdv-db190d91e7-v1",
+        "id": "sha256:fd4c50fd62008e647bc5c9c14eb126dfde1cccfab198e7ec22227997b95bc570"
+      },
+      "v2": {
+        "tag": "personal-deploy-validation/rust:pdv-db190d91e7-v2",
+        "id": "sha256:e6abf07166a4c84cbbefd605b70f521ffda00ceb6a8ceaac1c0b756e873f7ea4"
+      }
+    },
+    "go": {
+      "v1": {
+        "tag": "personal-deploy-validation/go:pdv-db190d91e7-v1",
+        "id": "sha256:516a02ef2d9bed287507e90bf1e274cfa5927f4611ea7bb11fb022d46da251de"
+      },
+      "v2": {
+        "tag": "personal-deploy-validation/go:pdv-db190d91e7-v2",
+        "id": "sha256:56ebf4c967ed05f46ac64e0817da0f7814368bf3fbf18a1772f6bef9cb22933b"
+      }
+    }
+  },
+  "record_count_migrated": 4,
+  "finished_at": "2026-09-16T06:40:57.565923+00:00"
+}

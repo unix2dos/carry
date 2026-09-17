@@ -1,0 +1,22 @@
+{
+  "validation/check.py": "adedcd437e4802caa4d557f28f73498f5b642b5cfda2a59830779fc16b6ce799",
+  "validation/fixtures/go/.dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+  "validation/fixtures/go/Dockerfile": "9e01aea4244b4eb384686fa84b6c075359ee1966b258b952787659c36ca94261",
+  "validation/fixtures/go/go.mod": "00e052453be733267f429cb8059aede1de6b18bd1190fc50af17d60d34f42701",
+  "validation/fixtures/go/go.sum": "4e7e05768d607a1cc09d1dbe92d138751e9111200e8eadf2be5d7c99b189e834",
+  "validation/fixtures/go/main.go": "98f0c28195cec790d9f83a49d32a07acaea6ee59d86434228c33f7c3dfb49730",
+  "validation/fixtures/node/.dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+  "validation/fixtures/node/Dockerfile": "490f8293c8ac94c87e350165f2f381ab271efa3fdc2d35695c160d440e05d117",
+  "validation/fixtures/node/app.mjs": "f83d239047bde147101e44c7fc271efe74050146765135eca3853068c393cb42",
+  "validation/fixtures/node/package-lock.json": "1b69a999400a0b7b27651e46caea4e3afcb31f13e8cc525d9f0d2692eb9462b0",
+  "validation/fixtures/node/package.json": "1cb77ebfc1a17173c241463b9abe66448a53bfeadb57be927170c602ada05778",
+  "validation/fixtures/python/.dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+  "validation/fixtures/python/Dockerfile": "a650731a8b851576f42f95634505421ae340ec4ca82b5a90765e0692e4a7b646",
+  "validation/fixtures/python/app.py": "2027274dfa9efeef9ae74d4d7a52a25c48fe9a993984ba365833b1172e2a9e0b",
+  "validation/fixtures/python/requirements.txt": "281591d93a3160ddfe766dfff1805a0af74efa49b9966b8f26af365d3cd3612b",
+  "validation/fixtures/rust/.dockerignore": "c78c8e702c9018bf7deff258e4965679d6a9cab90c61fa9c3c33c2b65a68095e",
+  "validation/fixtures/rust/Cargo.lock": "2721fd0134e3eb292d72a5c5ed4cc25e25187f08e1fd91cb96c64f848176ca95",
+  "validation/fixtures/rust/Cargo.toml": "800af4470c56ecb360d3b7951acbac978c34ee7b809469424f643cbd896f788b",
+  "validation/fixtures/rust/Dockerfile": "49baa37f8cae56f6fc371482ca6a43f0030ef63751344d8eabfcc35467222bfd",
+  "validation/fixtures/rust/src/main.rs": "ce8cd50c94e8601b2fbc79c6655edae4f991f170470c0acf8ab1bbb333f5c255"
+}

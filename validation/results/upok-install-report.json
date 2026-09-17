@@ -1,0 +1,59 @@
+{
+  "empty_initial_state": true,
+  "registered_existing_resources": true,
+  "provider_binaries_from_installation": true,
+  "railway_plan": "Trial",
+  "neon_plan": "free",
+  "eligible": true,
+  "auth": "reused existing official CLI logins; no new-user OAuth test",
+  "created_cloud_resources": false,
+  "publish_and_new_process_reconcile": true,
+  "operation_id": "1789625825526759000-258531440d0e1c59",
+  "deployment_id": "9240368e-2e6d-4d2d-8614-9dabeb0f935f",
+  "provider_state": "SUCCESS",
+  "checks": [
+    {
+      "path": "/healthz",
+      "ok": true,
+      "http_status": 200,
+      "version": "v3"
+    },
+    {
+      "path": "/readyz",
+      "ok": true,
+      "http_status": 200
+    }
+  ],
+  "marker_prefix": "upok:",
+  "full_application_probe": true,
+  "retained_record_preserved": true,
+  "transport_retries": 0,
+  "recorded_at": "2026-09-17T06:26:59.903096+00:00",
+  "project": "UpOK",
+  "status": "local_repository_and_installed_trial_path_validated",
+  "host": "macOS arm64",
+  "source_installation": "new standalone directory; existing Go, Node.js and npm; not a new OS user",
+  "state_migration": {
+    "existing_binding_preserved": true,
+    "prior_operations_preserved": 3,
+    "old_markers_preserved": true,
+    "new_operations_use_upok_marker": true,
+    "backup_created": true
+  },
+  "automated_checks": {
+    "go_test_race": "passed",
+    "go_vet": "passed",
+    "javascript_syntax": "passed",
+    "go_test_groups": 9,
+    "install_smoke": "passed",
+    "installer_refuses_overwrite": true,
+    "skill_frontmatter": "Ruby YAML.safe_load passed"
+  },
+  "limitations": [
+    "Railway account remains Trial; formal Free publishing is still unvalidated and blocked by the executable.",
+    "OAuth reused existing official CLI sessions; independent developer onboarding is not claimed.",
+    "No public repository, release, global Skill installation or new domain was published.",
+    "Cloud resources and billing configuration were unchanged; one source redeployment was performed.",
+    "Earlier PORT snapshot/runtime discrepancy remains unresolved."
+  ]
+}

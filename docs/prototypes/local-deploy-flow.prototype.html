@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>我的应用 · 本地部署管理</title>
+<style>
+:root{color-scheme:light;--paper:#f5f4ef;--white:#fff;--ink:#202b32;--muted:#606a70;--line:#dcded8;--accent:#176654;--soft:#e9f2ed;--amber:#84520e;--amberbg:#fff4dd;--red:#993d35}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:8px 13px;background:white;color:var(--ink);line-height:1.5}button:hover{border-color:var(--accent)}button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #91cabc;outline-offset:3px}button:disabled{cursor:default;opacity:.45}button.primary{background:var(--accent);border-color:var(--accent);color:white}button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);color:var(--accent)}h1,h2,h3,p{margin:0}h1{font-size:27px;letter-spacing:-.6px}h2{font-size:20px}h3{font-size:15px}small,.muted{color:var(--muted)}code{font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.shell{max-width:1220px;margin:auto;padding:28px 28px 48px}.eyebrow{font-size:12px;letter-spacing:1px;color:var(--accent);font-weight:700}.intro{max-width:880px;margin-top:7px;color:var(--muted)}.disclaimer{margin-top:14px;padding:10px 14px;border-left:3px solid var(--accent);background:var(--soft);font-size:13px}.topline,.row,.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.topline{justify-content:space-between}.scenarios{display:flex;gap:8px;margin:23px 0 15px;flex-wrap:wrap}.layout{display:grid;grid-template-columns:minmax(0,1fr) 305px;gap:18px;align-items:start}.panel{background:var(--white);border:1px solid var(--line);border-radius:9px;overflow:hidden}.panel-head{padding:17px 21px;border-bottom:1px solid var(--line)}.body{padding:21px}.subtitle{font-size:13px;color:var(--muted);margin-top:3px}.badge{display:inline-block;padding:3px 9px;border-radius:4px;background:#eef0ed;font-size:12px;font-weight:600}.good{color:var(--accent);background:var(--soft)}.warn{color:var(--amber);background:var(--amberbg)}.bad{color:var(--red);background:#faeeeb}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--line)}.metric{padding:17px 21px;border-right:1px solid var(--line)}.metric:last-child{border:0}.metric .label{font-size:12px;color:var(--muted)}.metric strong{display:block;font-size:17px;margin-top:5px}.notice{padding:13px 15px;border-left:3px solid var(--accent);background:var(--soft);margin:0 0 17px;font-size:14px}.notice.warn{border-color:var(--amber)}.notice.bad{border-color:var(--red)}.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 12px;font-size:14px;margin:13px 0 19px}.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}.resource{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:16px 0}.resource>div{padding:13px 15px;background:#f7f8f5;border:1px solid #e6e8e1;border-radius:5px}.resource p{font-size:13px;color:var(--muted);margin-top:5px}.task{padding-top:17px;margin-top:18px;border-top:1px solid var(--line)}.steps{list-style:none;margin:15px 0 0;padding:0;display:grid;gap:8px}.steps li{display:flex;gap:10px;align-items:baseline;font-size:13px}.stepno{color:var(--muted);font:12px ui-monospace,monospace;width:20px;flex-shrink:0}.steps .current{color:var(--accent);font-weight:600}.guide{padding:19px}.guide p{font-size:13px;color:var(--muted);margin:9px 0 13px}.guide ol{margin:0;padding-left:22px}.guide li{margin:8px 0}.guide li button{width:100%;text-align:left;font-size:13px;padding:7px 10px}.guide .completed{color:var(--accent);font-size:13px}.guide .current button{background:var(--accent);color:white;border-color:var(--accent)}.aside-note{padding:13px 18px;font-size:12px;border-top:1px solid var(--line);color:var(--muted)}details{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}summary{cursor:pointer;font-size:14px;font-weight:600}.log{list-style:none;padding:0;margin:10px 0 0;max-height:200px;overflow:auto}.log li{padding:7px 0;border-top:1px solid #edf0e9;font-size:12px}.log .num{color:var(--muted);display:inline-block;width:29px}footer{margin-top:22px;color:var(--muted);font-size:12px}.lab{margin-top:18px}.lab .actions{margin-top:12px}.lab button{font-size:12px}.lab .kv{margin-bottom:0}.explain{margin-top:14px;font-size:13px;color:var(--muted)}.offline{padding:35px 22px;text-align:center;background:#f7f8f5}.offline h2{margin-bottom:10px}.offline p{max-width:540px;margin:0 auto 17px;color:var(--muted)}.outcome{margin-top:15px;padding:12px;background:var(--soft);font-size:13px}.account{padding:15px 0;border-bottom:1px solid var(--line)}.account:last-child{border:0}.account .row{justify-content:space-between}.account p{font-size:13px;color:var(--muted);margin-top:5px}.small{font-size:12px}.hidden{display:none!important}
+@media(max-width:880px){.layout{grid-template-columns:1fr}.guide ol{display:grid;grid-template-columns:1fr 1fr;gap:0 19px}.shell{padding:20px 17px}.topline{align-items:flex-start}}@media(max-width:520px){h1{font-size:23px}.metrics{grid-template-columns:1fr}.metric{padding:11px 18px;border-right:0;border-bottom:1px solid var(--line)}.metric strong{font-size:15px}.resource{grid-template-columns:1fr}.guide ol{display:block}.body{padding:17px}.kv{grid-template-columns:88px minmax(0,1fr)}.scenarios button{flex:1;padding:8px;font-size:13px}}
+/* User-facing preview: the existing walkthrough is available only at ?review=1. */
+[hidden]{display:none!important}.compact{max-width:1000px;margin:0 auto;padding:48px 28px}.compact h1{font-size:25px}.compact .brand{font-size:14px;font-weight:600}.compact .preview-label{font-size:12px;color:var(--muted)}.compact-title{margin:45px 0 18px}.app-summary{padding:27px 28px}.app-summary h2{font-size:20px}.app-summary .meta{font-size:13px;color:var(--muted);margin-top:5px}.app-address{margin:22px 0 23px;color:var(--muted);font-size:14px;overflow-wrap:anywhere}.app-summary .actions{gap:9px}.compact footer{margin-top:20px}.compact .notice{margin:18px 0 0}.compact details{margin-top:23px;font-size:13px}.compact details .kv{margin-bottom:0}.compact dialog{width:min(480px,calc(100vw - 32px));padding:25px;border:1px solid var(--line);border-radius:9px;color:var(--ink);background:var(--white)}.compact dialog::backdrop{background:#18262c55}.compact dialog h2{font-size:19px;margin-bottom:15px}.compact dialog p{font-size:14px}.compact dialog pre{white-space:pre-wrap;background:var(--paper);padding:16px;border-radius:5px;font:13px/1.8 ui-monospace,monospace}.compact dialog form{margin-top:21px;text-align:right}.compact blockquote{margin:15px 0;padding:12px 15px;border-left:3px solid var(--accent);background:var(--soft);font-size:14px}.compact .account{padding:12px 0}.quiet-button{background:transparent}.compact .empty{padding:44px 20px;text-align:center}.compact .empty p{margin:9px 0 18px;color:var(--muted)}@media(max-width:520px){.compact{padding:24px 18px}.compact-title{margin-top:32px}.app-summary{padding:21px}.app-summary .actions button{flex:1}.compact .preview-label{width:100%}}
+</style>
+</head>
+<body>
+<main class="compact" id="compact" hidden>
+ <header class="topline"><div class="row"><span class="brand">部署管理</span><span class="badge">本地</span></div><span class="preview-label">界面预览 · 仅示例数据，不连接真实资源</span></header>
+ <div class="topline compact-title"><h1 tabindex="-1" id="compact-title">我的应用</h1><div class="actions"><button class="quiet-button" data-view="accounts">资源账号</button><button data-view="add">添加应用</button></div></div>
+ <div id="compact-app"></div>
+ <p id="compact-status" role="status" aria-live="polite" class="explain"></p>
+ <footer>部署和复杂调整，可以继续在你已有的 Agent 中完成。</footer>
+ <dialog id="compact-dialog" aria-labelledby="dialog-title"><h2 id="dialog-title"></h2><div id="dialog-content"></div><form method="dialog"><button>关闭</button></form></dialog>
+</main>
+<main class="shell" id="review" hidden>
+ <header>
+  <div class="topline"><div><div class="eyebrow">本地工具 / 交互验证</div><h1>部署、更新，然后接着管理。</h1></div><span class="badge">可丢弃原型 · 01</span></div>
+  <p class="intro">这份草图验证：网页、Agent 与 CLI 能否围绕同一个项目协作；中断或网络超时后，用户能否看清已发生的事，再继续操作。</p>
+  <div class="disclaimer">全部为模拟数据。不会登录账号、执行命令、访问云服务或产生费用；刷新页面会重置。示例平台、状态与地址不代表实际供应商能力。</div>
+ </header>
+ <nav class="scenarios" aria-label="选择演示流程">
+  <button data-scenario="first" aria-pressed="true">01 首次部署</button><button data-scenario="update" aria-pressed="false">02 日常更新</button><button data-scenario="resume" aria-pressed="false">03 中断恢复</button>
+ </nav>
+ <div class="layout">
+  <section class="panel" aria-label="产品界面草图">
+   <div class="panel-head"><div class="topline"><div><h2 id="screen-title">连接你的资源账号</h2><p class="subtitle">本地管理 · 应用和数据属于你的资源账号</p></div><span id="connection" class="badge good">本地工具运行中</span></div></div>
+   <p id="product-feedback" class="notice warn" role="status" tabindex="-1" style="margin:18px 21px 0" hidden></p>
+   <div id="product"></div>
+  </section>
+  <aside class="panel"><div class="guide"><span class="eyebrow">按步骤体验</span><h2 id="guide-title"></h2><p id="guide-description"></p><ol id="guide-steps"></ol><div id="guide-result"></div><button id="reset" style="margin-top:16px">重新体验本流程</button></div><div class="aside-note">右侧步骤与下方“模拟条件”用于推动演示，不属于正式产品界面。可直接点击左侧界面操作，也可按步骤体验。</div></aside>
+ </div>
+ <section class="panel lab" aria-label="模拟条件与状态">
+  <div class="body"><div class="topline"><h3>模拟条件与状态</h3><span class="muted small">任意尝试；无效操作会解释原因</span></div><p id="feedback" class="explain" role="status" aria-live="polite"></p><div id="lab-actions" class="actions"></div><details><summary>查看模拟状态与操作检查</summary><dl id="truth" class="kv"></dl><button id="selfcheck">运行原型自检</button><p id="check-result" class="explain" role="status"></p></details></div>
+ </section>
+ <footer>浏览器关闭、本地进程退出和云端任务完成是三个不同事件。此文件只演示它们的区别；真实持久化、供应商行为与安装流程仍需正式实现及验收。</footer>
+</main>
+<script>
+'use strict';
+// PROTOTYPE: in-memory state only. No network, credentials, storage, or command execution.
+function initialState(scenario='first') {
+ const ready=scenario!=='first';
+ return {scenario,compute:ready,database:ready,project:ready,preflight:ready,authorized:ready,agent:true,local:true,page:true,network:true,http:true,eligible:true,resources:ready?2:0,submissions:ready?1:0,rows:ready?3:0,cloud:ready?'ready':'none',observed:ready?'ready':'none',version:ready?'v1':null,lastVersion:ready?'v1':null,target:'v1',stage:ready?'done':'setup',checks:ready?'ok':'never',lastCheck:ready?'演示初始检查':'尚无',events:ready?['已读取示例项目的资源关联；最近一次检查通过。']:[],message:'选择右侧步骤开始，也可以直接操作界面。'};
+}
+// Pure transition function: every simulated entry point uses the same guards and state.
+function transition(current, action) {
+ const s={...current,events:[...current.events],rejected:false,lastAction:action};
+ const say=(message,record=true)=>{s.message=message;if(record)s.events.push(message);return s;};
+ const blocked=message=>{s.rejected=true;return say(message,false);};
+ const needsTool=['authCompute','authDatabase','project','preflight','deploy','updateUI','updateCLI','reconcile','verify'];
+ if(needsTool.includes(action)&&!s.local)return blocked('本地工具已退出。先重新打开，再核对已有操作。');
+ if(['authCompute','authDatabase','deploy','updateUI'].includes(action)&&!s.page)return blocked('页面已关闭。重新打开页面后再执行网页操作。');
+ if(action==='project'&&!s.agent)return blocked('此步骤演示 Agent 接入项目；当前 Agent 不可用。首次接入也可由正式 CLI 承担。');
+ if(['authCompute','authDatabase','preflight','deploy','updateUI','updateCLI','reconcile'].includes(action)&&!s.network){
+  if(s.stage!=='setup'&&s.stage!=='plan'){s.observed='unknown';s.stage='unknown';}
+  return say('供应商接口暂时不可达，结果待核实。没有重新提交，也没有创建资源。');
+ }
+ switch(action){
+  case 'authCompute':s.compute=true;return say('计算账号已连接（模拟授权）；账号归属用户。');
+  case 'authDatabase':s.database=true;return say('数据库账号已连接（模拟授权）；不展示凭证。');
+  case 'project':s.project=true;return say('Agent 已接入 hello-web 示例目录，识别为容器 Web/API + PostgreSQL。');
+  case 'preflight':
+   if(!s.compute||!s.database||!s.project)return blocked('先连接两个资源账号，并通过 Agent 接入示例项目。');
+   if(s.resources)return blocked('已有资源。后续发布使用项目现有配置，无需重新创建。');
+   s.preflight=s.eligible;s.stage=s.eligible?'plan':'setup';
+   return say(s.eligible?'预检通过（模拟）：可在不自动启用付费的约束下继续。':'费用条件不满足，已停止。不会自动升级付费计划；需重新选择可用方案。');
+  case 'deploy':
+   if(s.resources)return blocked('该项目已有资源。请查看本次操作或核对状态，不重复创建。');
+   if(!s.preflight||!s.eligible||!s.project||!s.compute||!s.database)return blocked('尚未通过账号、项目及费用条件预检，不能创建资源。');
+   s.authorized=true;s.resources=2;s.rows=3;s.target='v1';s.cloud='building';s.observed='building';s.stage='building';s.submissions++;
+   return say('已授权此项目的常规操作，创建 2 个模拟资源并提交 v1 构建。启用付费、删除数据不在授权范围内。');
+  case 'updateUI':case 'updateCLI':
+   if(!s.authorized||s.resources!==2)return blocked('尚无已授权的受管项目，请先完成首次部署。');
+   if(s.stage!=='done'&&s.stage!=='failed')return blocked('已有未完成或待核实的操作。先核对结果，不能重复发布。');
+   if(!s.eligible)return blocked('当前费用条件不满足，发布已停止。');
+   s.target='v'+(Number((s.version||'v0').slice(1))+1);s.cloud='building';s.observed='building';s.stage='building';s.submissions++;
+   return say((action==='updateCLI'?'CLI':'网页')+' 已使用原资源提交 '+s.target+' 构建。无需 Agent；现有数据库保持不变。');
+  case 'complete':
+   if(s.cloud!=='building')return blocked('当前没有等待完成的云端构建。');
+   s.cloud='ready';s.version=s.target;
+   if(s.local&&s.network){s.observed='ready';s.stage='verify';return say('供应商返回发布完成。HTTP 和数据库访问仍待验证。');}
+   return say('模拟条件：云端已完成发布。本地尚未获知，重新打开后需要核对。',false);
+  case 'fail':
+   if(s.cloud!=='building')return blocked('当前没有进行中的构建可模拟失败。');
+   s.cloud='failed';if(s.local&&s.network){s.observed='failed';s.stage='failed';return say('本例构建失败；已有版本与数据库保留。请检查构建日志后再重试。');}
+   return say('模拟条件：云端构建失败，本地尚未获知。',false);
+  case 'reconcile':
+   if(!s.resources)return blocked('尚未创建资源，没有可核对的云端任务。');
+   s.observed=s.cloud;
+   if(s.cloud==='ready')s.stage=s.lastVersion===s.version&&s.checks==='ok'?'done':'verify';
+   else s.stage=s.cloud==='failed'?'failed':'building';
+   return say(s.cloud==='ready'?'已找到原资源和部署记录；发布已完成，可继续验证。资源数仍为 2。':s.cloud==='failed'?'已确认构建失败，现有数据保留；检查日志后可重新提交。':'已确认原构建仍在执行，继续观察，不重复提交。');
+  case 'verify':
+   if(s.observed!=='ready'||!['verify','done'].includes(s.stage))return blocked('尚未确认发布完成。先核对供应商的部署结果。');
+   if(!s.http){s.checks='unknown';return say('本机访问在 TLS 握手阶段超时。应用和数据库当前可访问性待确认，保留上次成功检查。');}
+   s.checks='ok';s.lastVersion=s.version;s.lastCheck='本轮模拟检查';s.stage='done';
+   return say('HTTP 与数据库读写检查通过（模拟）；已验证 '+s.version+'，示例数据仍为 3 条。');
+  case 'agentOff':s.agent=false;return say('模拟条件：Agent 不可用。网页与 CLI 仍可使用已支持的操作。',false);
+  case 'agentOn':s.agent=true;return say('模拟条件：Agent 已恢复。',false);
+  case 'closePage':s.page=false;return say('页面已关闭，本地进程仍在运行；不会因此取消进行中的任务。',false);
+  case 'openPage':if(!s.local)return blocked('本地进程已退出，需要先重新打开工具。');s.page=true;return say('已重新连接本地页面。',false);
+  case 'stop':s.local=false;s.page=false;return say('本地工具已退出。尚未执行的本地步骤停止；已提交任务由供应商处理。',false);
+  case 'open':s.local=true;s.page=true;if(s.resources){s.observed='unknown';s.stage='unknown';}return say('已读取本地记录。先核对供应商实际结果，再继续操作。');
+  case 'unreachable':s.network=false;return say('模拟条件：供应商管理接口不可达。不会据此判定云端操作失败。',false);
+  case 'reachable':s.network=true;return say('模拟条件：供应商管理接口恢复；仍需执行状态核对。',false);
+  case 'httpTimeout':s.http=false;return say('模拟条件：本机到应用的 TLS 握手超时；请执行一次应用检查观察结果。',false);
+  case 'httpRestore':s.http=true;return say('模拟条件：应用访问恢复；再次检查后才能更新检查结论。',false);
+  case 'ineligible':s.eligible=false;s.preflight=false;if(!s.resources)s.stage='setup';return say('模拟条件：不满足默认费用约束；后续创建和发布会被阻止。',false);
+  case 'eligible':s.eligible=true;return say('模拟条件：费用条件恢复。首次创建前仍须重新预检。',false);
+  default:return blocked('未识别的模拟操作。');
+ }
+}
+const actions={authCompute:'模拟连接计算账号',authDatabase:'模拟连接数据库账号',project:'模拟 Agent 接入项目',preflight:'检查项目与费用条件',deploy:'授权此项目并部署',updateUI:'使用现有配置更新',updateCLI:'模拟 CLI 发布更新',complete:'模拟云端发布完成',fail:'模拟云端构建失败',verify:'检查 HTTP 与数据库',reconcile:'核对云端实际结果',agentOff:'模拟 Agent 不可用',agentOn:'恢复 Agent',closePage:'模拟关闭网页',openPage:'重新打开网页',stop:'模拟退出本地工具',open:'重新打开本地工具',unreachable:'模拟供应商不可达',reachable:'恢复供应商访问',httpTimeout:'模拟应用 TLS 超时',httpRestore:'恢复应用访问',ineligible:'模拟费用条件不满足',eligible:'恢复费用条件'};
+const scenarios={
+ first:{title:'把现有项目上线',description:'从已安装并启动工具开始。网页连接账号，Agent 接入项目，明确资源与授权范围后执行。',steps:['authCompute','authDatabase','project','preflight','deploy','complete','verify'],result:'已走完首次部署。界面分别展示资源、供应商发布结果和应用检查结果。'},
+ update:{title:'Agent 不可用，也能更新',description:'起点：v1 已上线，项目已有常规操作授权。用 CLI 更新，再观察访问超时与发布结果的区别。',steps:['agentOff','updateCLI','complete','verify','httpTimeout','verify','httpRestore','verify'],result:'更新和访问检查相互独立。网络超时保留最近成功记录，恢复后再次检查。'},
+ resume:{title:'退出以后，接着做',description:'起点：v2 已提交构建。退出工具后云端完成；重新打开时先核对，不能重复创建或发布。',steps:['stop','complete','open','unreachable','reconcile','reachable','updateCLI','reconcile','verify'],result:'结果未知时重复发布被阻止。核对已有任务后继续验证，资源数保持为 2。'}
+};
+function scenarioState(name){let s=initialState(name);if(name==='resume')s=transition(s,'updateUI');return s;}
+// ponytail: one linear walkthrough per scenario; add branching guides only if usability review needs them.
+const reviewMode=new URLSearchParams(location.search).get('review')==='1';
+let scenario=reviewMode?'first':'update',state=scenarioState(scenario),step=0;
+const $=id=>document.getElementById(id);
+const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const button=(action,primary=false)=>`<button data-action="${action}" class="${primary?'primary':''}">${actions[action]}</button>`;
+function logMarkup(){return `<details><summary>操作记录（模拟、已脱敏） · ${state.events.length} 条</summary><ol class="log">${state.events.map((e,i)=>`<li><span class="num">${String(i+1).padStart(2,'0')}</span>${escapeHTML(e)}</li>`).join('')}</ol></details>`;}
+function render(){
+ if(!reviewMode){renderCompact();return;}
+ document.querySelectorAll('[data-scenario]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scenario===scenario)));
+ const guide=scenarios[scenario];$('guide-title').textContent=guide.title;$('guide-description').textContent=guide.description;
+ $('guide-steps').innerHTML=guide.steps.map((a,i)=>`<li class="${i===step?'current':''}">${i<step?`<span class="completed">${actions[a]} · 已体验</span>`:`<button data-guide="${i}" ${i!==step?'disabled':''}>${actions[a]}</button>`}</li>`).join('');
+ $('guide-result').innerHTML=step===guide.steps.length?`<div class="outcome">${guide.result}</div>`:'';
+ $('feedback').textContent=state.message;
+ const needsExplanation=state.local&&state.page&&(state.rejected||(state.lastAction==='preflight'&&!state.preflight)||(['authCompute','authDatabase','reconcile'].includes(state.lastAction)&&!state.network));
+ $('product-feedback').hidden=!needsExplanation;
+ $('product-feedback').textContent=needsExplanation?state.message:'';
+ $('connection').className='badge '+(state.local&&state.page?'good':'warn');
+ $('connection').textContent=!state.local?'本地进程已退出':state.page?'本地工具运行中':'网页已关闭 · 进程仍运行';
+ $('screen-title').textContent=state.project?'hello-web':'连接你的资源账号';
+ if(!state.local||!state.page){
+  $('product').innerHTML=`<div class="offline"><h2>${state.local?'网页已关闭':'本地工具已退出'}</h2><p>${state.local?'本地任务仍可继续执行。重新打开页面后查看进展。':'云端已提交任务仍由供应商处理。重新打开工具后核对结果，再继续未完成的步骤。'}</p>${button(state.local?'openPage':'open',true)}<p class="explain">这是模拟退出，浏览器本身不会被关闭。下面可模拟云端完成任务。</p></div>`;
+ }else if(!state.resources){
+  $('product').innerHTML=`<div class="body"><div class="notice">${state.stage==='plan'?'部署前看清：用谁的账号、创建什么、允许哪些操作。':'连接用户自己的资源账号。正式产品通过供应商官方授权流程处理凭证。'}</div><div class="account"><div class="row"><h3>计算平台 A · 个人演示账号</h3>${state.compute?'<span class="badge good">已连接</span>':button('authCompute')}</div><p>运行应用容器；此处没有真实供应商登录。</p></div><div class="account"><div class="row"><h3>PostgreSQL 平台 B · 个人演示账号</h3>${state.database?'<span class="badge good">已连接</span>':button('authDatabase')}</div><p>保存应用业务数据；密钥不进入普通操作记录。</p></div><div class="task"><h3>接入已有项目</h3><p class="explain">${state.project?'hello-web · 容器 Web/API + PostgreSQL · ~/projects/hello-web':'在已有 Agent 中选择项目，读取 Skill 后调用本地工具；这里用一个模拟按钮代表该过程。'}</p><div class="actions" style="margin-top:12px">${!state.project?button('project'):''}${button('preflight',state.stage!=='plan')}</div></div>${state.stage==='plan'?`<div class="task"><h3>本次部署计划</h3><dl class="kv"><dt>资源归属</dt><dd>你的两个个人演示账号</dd><dt>将创建</dt><dd>1 个应用服务 + 1 个数据库</dd><dt>费用约束</dt><dd>不自动启用付费 · 本例模拟满足条件</dd><dt>项目授权</dt><dd>创建上述资源、查询、常规更新与恢复</dd><dt>单独确认</dt><dd>启用付费、删除数据等高影响操作</dd></dl>${button('deploy',true)}</div>`:''}${logMarkup()}</div>`;
+ }else{
+  const labels={building:'构建进行中',verify:'已发布 · 待验证',done:'操作已完成',unknown:'结果待核实',failed:'构建失败'};
+  const tone=state.stage==='unknown'||state.stage==='verify'?'warn':state.stage==='failed'?'bad':'good';
+  const note=state.stage==='unknown'?'本地记录可能已落后于云端。先核对原任务，核对前不会重新发布或创建资源。':state.stage==='building'?'新版本构建已提交。供应商发布结果与应用实际可访问性将分别验证。':state.stage==='verify'?'供应商已返回发布完成，继续检查 HTTP 与数据库，才能确认应用可用。':state.stage==='failed'?'本例确认构建失败，之前的数据保留。查看记录后，可以使用已有配置重新提交。':state.checks==='unknown'?'发布结果已确认；本机访问检查超时。应用和数据库当前可访问性待确认。':'最近一次应用与数据库检查通过。后续更新继续使用同一组资源。';
+  const steps=['读取项目与授权','使用关联资源','提交构建与发布','检查 HTTP 与数据库'];
+  $('product').innerHTML=`<div class="metrics"><div class="metric"><span class="label">本次操作 · ${state.target}</span><strong>${labels[state.stage]||'待处理'}</strong></div><div class="metric"><span class="label">最近验证通过的版本</span><strong>${state.lastVersion||'尚未验证'}</strong></div><div class="metric"><span class="label">本地检查结果</span><strong>${state.checks==='ok'?'最近检查通过':state.checks==='unknown'?'当前访问待确认':'尚未检查'}</strong></div></div><div class="body"><div class="notice ${tone}">${note}</div><div class="topline"><h3>你的资源</h3><span class="badge">共 ${state.resources} 个 · 沿用原关联</span></div><div class="resource"><div><h3>Web/API</h3><p>计算平台 A · 你的账号</p><p><code>app-demo-01</code></p></div><div><h3>PostgreSQL</h3><p>数据库平台 B · 你的账号</p><p><code>db-demo-01</code></p></div></div><dl class="kv"><dt>示例访问地址</dt><dd><code>hello-web.example.test</code>（不可访问的占位地址）</dd><dt>检查时间</dt><dd>${state.lastCheck}（演示标记）</dd><dt>Agent</dt><dd>${state.agent?'本机接入可用（模拟）':'当前不可用；网页和 CLI 可继续操作'}</dd><dt>费用边界</dt><dd>不自动启用付费${state.eligible?'':' · 当前条件不满足'}</dd></dl><div class="actions">${state.stage==='unknown'||state.stage==='building'?button('reconcile',true):''}${state.stage==='verify'||state.stage==='done'?button('verify',state.stage==='verify'):''}${state.stage==='done'||state.stage==='failed'?button('updateUI',true):''}</div><div class="task"><div class="topline"><h3>本次操作进度</h3><span class="badge ${tone}">op-demo-${String(state.submissions).padStart(3,'0')}</span></div><ol class="steps">${steps.map((label,i)=>`<li class="${i===(['building','unknown','failed'].includes(state.stage)?2:3)?'current':''}"><span class="stepno">0${i+1}</span><span>${i===2&&state.stage==='unknown'?'核对构建与发布结果':label}${i===3&&state.stage==='done'?' · 已完成':''}</span></li>`).join('')}</ol></div>${logMarkup()}</div>`;
+ }
+ $('lab-actions').innerHTML=['agentOff','agentOn','updateCLI','complete','fail','closePage','openPage','stop','open','unreachable','reachable','httpTimeout','httpRestore','ineligible','eligible'].map(a=>button(a)).join('');
+ const truth=[['本地进程',state.local?'运行中':'已退出'],['网页连接',state.page?'打开':'关闭'],['供应商接口',state.network?'可达':'不可达'],['云端真实情况（模拟者视角）',({none:'尚无任务',building:'正在构建',ready:'发布完成',failed:'构建失败'})[state.cloud]],['本地掌握的云端结果',({none:'尚无',building:'正在构建',ready:'发布完成',failed:'失败',unknown:'未知，待核实'})[state.observed]],['云端当前版本（模拟者视角）',state.version||'尚无'],['本地最近验证版本',state.lastVersion||'尚无'],['资源数 / 提交次数',state.resources+' / '+state.submissions],['示例业务数据条数',state.rows],['项目常规授权',state.authorized?'已授权':'未授权']];
+ $('truth').innerHTML=truth.map(([k,v])=>`<dt>${escapeHTML(k)}</dt><dd>${escapeHTML(v)}</dd>`).join('');
+}
+function dispatch(action){
+ const origin=document.activeElement;
+ const guided=origin?.hasAttribute('data-guide');
+ const region=origin?.closest('#product')?'product':'lab-actions';
+ state=transition(state,action);
+ const expectedBlock=scenario==='resume'&&step===6&&action==='updateCLI';
+ if(scenarios[scenario].steps[step]===action&&(!state.rejected||expectedBlock)&&!(action==='preflight'&&!state.preflight))step++;
+ render();
+ const next=guided?(document.querySelector(`[data-guide="${step}"]`)||$('reset')):!$('product-feedback').hidden?$('product-feedback'):($(region).querySelector(`[data-action="${action}"]`)||$('product').querySelector('button')||$('reset'));
+ next.focus({preventScroll:guided});
+}
+document.addEventListener('click',event=>{const b=event.target.closest('button');if(!b)return;if(!reviewMode){if(b.dataset.view)showCompactDialog(b.dataset.view);else if(b.dataset.compactAction)compactAction(b.dataset.compactAction);return;}const key=b.dataset.scenario;if(key){scenario=key;state=scenarioState(key);step=0;$('check-result').textContent='';render();}else if(b.id==='reset'){state=scenarioState(scenario);step=0;render();}else if(b.dataset.guide!==undefined){dispatch(scenarios[scenario].steps[step]);}else if(b.dataset.action){dispatch(b.dataset.action);}});
+function renderCompact(){
+ const busy=['building','verify'].includes(state.stage);
+ const uncertain=state.stage==='unknown'||state.checks==='unknown';
+ const label=uncertain?'状态待确认':state.stage==='building'?'正在更新':state.stage==='verify'?'正在验证':state.stage==='failed'?'更新失败':'最近检查正常';
+ const tone=uncertain?'warn':state.stage==='failed'?'bad':'good';
+ const recovery=state.stage==='unknown'?'reconcile':'verify';
+ const explanation=state.stage==='unknown'?'上次操作结果尚未确认。核对已有任务后，再继续处理。':state.checks==='unknown'?'这次访问检查超时，保留上次成功结果。可以重新检查。':state.stage==='failed'?'这次更新未完成。查看日志后，可以重新发布。':'';
+ $('compact-app').innerHTML=`<section class="panel app-summary" aria-label="hello-web 应用"><div class="topline"><div><h2>hello-web</h2><p class="meta">Go · PostgreSQL · ${state.lastVersion||'待验证'}</p></div><span class="badge ${tone}" role="status">${label}</span></div><p class="app-address">hello-web.example.test <span class="small">· 示例地址</span></p><div class="actions"><button data-view="visit">打开应用</button><button data-view="logs">查看日志</button><button data-compact-action="updateUI" class="primary" ${busy||state.stage==='unknown'?'disabled':''}>${busy?'更新中…':'发布更新'}</button></div>${explanation?`<div class="notice ${tone}">${explanation}${uncertain?` <button data-compact-action="${recovery}">重新检查</button>`:''}</div>`:''}<details><summary>应用详情</summary><dl class="kv"><dt>计算服务</dt><dd>平台 A · 你的账号</dd><dt>数据库</dt><dd>平台 B · PostgreSQL</dd><dt>费用规则</dt><dd>不自动启用付费</dd><dt>最近检查</dt><dd>${state.lastCheck}（示例）</dd><dt>操作记录</dt><dd>${state.submissions} 次发布，沿用同一组资源</dd></dl></details></section>`;
+}
+function showCompactDialog(view){
+ const content={
+  accounts:['资源账号',`<p class="muted">云资源和费用归属你自己的账号。</p><div class="account"><div class="topline"><strong>计算平台 A</strong><span class="badge good">已连接</span></div><p>个人账号 · 示例</p></div><div class="account"><div class="topline"><strong>PostgreSQL 平台 B</strong><span class="badge good">已连接</span></div><p>个人账号 · 示例</p></div>`],
+  add:['添加应用','<p>在已有 Agent 中打开你的项目，使用部署 Skill，然后告诉它：</p><blockquote>帮我部署当前项目，使用我已连接的资源账号，默认不启用付费方案。</blockquote><p class="muted">接入后，应用会出现在这里。当前仅演示界面，尚未连接 Agent。</p>'],
+  visit:['打开应用','<p><code>hello-web.example.test</code></p><p class="explain">这是预览用的示例地址。正式使用时，这个按钮会打开你的线上应用。</p>'],
+  logs:['应用日志 · 示例',`<pre>应用已启动\n数据库连接成功\nGET /healthz → 200\n当前已验证版本：${escapeHTML(state.lastVersion||'尚无')}</pre><details><summary>部署记录</summary><ol class="log">${state.events.map(e=>`<li>${escapeHTML(e)}</li>`).join('')}</ol></details>`]
+ }[view];
+ if(!content)return;$('dialog-title').textContent=content[0];$('dialog-content').innerHTML=content[1];$('compact-dialog').showModal();
+}
+function compactAction(action){
+ state=transition(state,action);renderCompact();
+ $('compact-status').textContent=state.rejected?state.message:action==='updateUI'?'已提交更新，正在发布示例版本…':'检查已完成（示例）。';
+ // Preview only: timers simulate provider responses; all transitions reuse the reviewed model.
+ if(action==='updateUI'&&!state.rejected&&state.stage==='building'){
+  $('compact-title').focus({preventScroll:true});
+  setTimeout(()=>{state=transition(state,'complete');renderCompact();$('compact-status').textContent='发布已完成，正在检查应用和数据库…';
+   setTimeout(()=>{state=transition(state,'verify');renderCompact();$('compact-status').textContent=state.checks==='ok'?'更新完成 · '+state.lastVersion+' · 原有数据保留（示例）。':'访问待确认，请查看应用提示。';},650);
+  },850);
+ }
+}
+// One runnable check for prototype invariants; it does not exercise real APIs or change the visible scenario.
+function selfCheck(){
+ let checks=0;const assert=(ok,msg)=>{if(!ok)throw new Error(msg);checks++;};
+ let s=initialState();s=transition(s,'deploy');assert(s.resources===0,'未预检不能创建');
+ for(const a of ['authCompute','authDatabase','project','ineligible','preflight','deploy'])s=transition(s,a);
+ assert(s.resources===0,'费用条件不满足不能创建');
+ for(const a of ['eligible','preflight','deploy','complete','verify'])s=transition(s,a);
+ assert(s.stage==='done'&&s.lastVersion==='v1'&&s.resources===2,'首次部署');
+ s=transition(s,'agentOff');s=transition(s,'updateCLI');assert(s.target==='v2'&&s.submissions===2,'无 Agent 更新');
+ for(const a of ['stop','complete'])s=transition(s,a);assert(s.version==='v2'&&s.lastVersion==='v1','本地退出后云端完成，不能更新本地检查结论');
+ for(const a of ['open','unreachable','reconcile','reachable','updateCLI','deploy'])s=transition(s,a);
+ assert(s.stage==='unknown'&&s.submissions===2&&s.resources===2,'未知结果禁止重复提交');
+ for(const a of ['reconcile','verify'])s=transition(s,a);assert(s.stage==='done'&&s.lastVersion==='v2'&&s.rows===3,'核对后恢复并保留数据');
+ s=transition(s,'httpTimeout');s=transition(s,'verify');assert(s.stage==='done'&&s.checks==='unknown'&&s.lastVersion==='v2','访问超时不撤销已验证的历史版本');
+ let f=initialState('update');for(const a of ['updateUI','closePage','complete'])f=transition(f,a);assert(f.local&&!f.page&&f.stage==='verify','关闭网页不取消任务');
+ f=initialState('update');for(const a of ['updateUI','fail'])f=transition(f,a);assert(f.stage==='failed'&&f.version==='v1'&&f.rows===3,'本例构建失败保留旧版数据');
+ return checks;
+}
+$('selfcheck').addEventListener('click',()=>{try{$('check-result').textContent=selfCheck()+' 项模拟状态检查通过；不代表云端或正式产品验收。';}catch(error){$('check-result').textContent='检查失败：'+error.message;}});
+$('compact').hidden=reviewMode;
+$('review').hidden=!reviewMode;
+render();
+</script>
+</body>
+</html>
