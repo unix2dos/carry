@@ -15,25 +15,25 @@ done
 node -e 'const [major,minor]=process.versions.node.split(".").map(Number); if (major<20 || (major===20 && minor<19)) process.exit(1)' || fail 'Node.js 20.19+ is required.'
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-destination=${1:-"$HOME/.local/share/upok"}
+destination=${1:-"$HOME/.local/share/ship"}
 case "$destination" in /*) ;; *) fail 'INSTALL_DIRECTORY must be an absolute path.' ;; esac
 [ ! -e "$destination" ] && [ ! -L "$destination" ] || fail 'Installation directory already exists. Choose a new directory; this installer never overwrites an installation.'
 parent=$(dirname -- "$destination")
 mkdir -p "$parent"
-stage=$(mktemp -d "$parent/.upok-install.XXXXXX")
+stage=$(mktemp -d "$parent/.ship-install.XXXXXX")
 trap 'rm -rf -- "$stage"' EXIT HUP INT TERM
-mkdir -p "$stage/bin" "$stage/tools" "$stage/docs" "$stage/skills/upok"
+mkdir -p "$stage/bin" "$stage/tools" "$stage/docs" "$stage/skills/ship"
 cp "$repo/validation/cloud-tools/package.json" "$repo/validation/cloud-tools/package-lock.json" "$stage/tools/"
-(cd "$repo" && go build -buildvcs=false -o "$stage/bin/upok" ./cmd/upok)
+(cd "$repo" && go build -buildvcs=false -o "$stage/bin/ship" ./cmd/ship)
 npm ci --prefix "$stage/tools" --no-audit --no-fund
 "$stage/tools/node_modules/.bin/railway" --version
 "$stage/tools/node_modules/.bin/neon" --version
 cp "$repo/docs/ALPHA.md" "$stage/docs/"
 mkdir -p "$stage/docs/research"
 cp "$repo/docs/research/2026-09-16-free-plan-boundaries.md" "$stage/docs/research/"
-cp "$repo/skills/upok/SKILL.md" "$stage/skills/upok/"
-"$stage/bin/upok" help >/dev/null
+cp "$repo/skills/ship/SKILL.md" "$stage/skills/ship/"
+"$stage/bin/ship" help >/dev/null
 [ ! -e "$destination" ] && [ ! -L "$destination" ] || fail 'Installation destination appeared during installation; nothing was replaced.'
 mv "$stage" "$destination"
 trap - EXIT HUP INT TERM
-printf '\nUpOK installed at: %s\nStart: "%s/bin/upok" serve --open\nGuide: %s/docs/ALPHA.md\n' "$destination" "$destination" "$destination"
+printf '\nShip installed at: %s\nStart: "%s/bin/ship" serve --open\nGuide: %s/docs/ALPHA.md\n' "$destination" "$destination" "$destination"

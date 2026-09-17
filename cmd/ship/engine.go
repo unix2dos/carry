@@ -75,7 +75,7 @@ func (e *Engine) check(ctx context.Context, p Project) (ApplicationChecks, error
 	return c, e.Store.saveChecks(p.Name, c)
 }
 func excluded(name string) bool {
-	for _, v := range []string{".git", "node_modules", ".venv", "__pycache__", "target", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
+	for _, v := range []string{".git", "node_modules", ".venv", "__pycache__", "target", ".ship", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
 		if name == v {
 			return true
 		}
@@ -87,7 +87,7 @@ func bundleSource(source, root string, secrets []string) (dir, digest string, co
 	if rel, e := filepath.Rel(source, root); e == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 		return "", "", 0, errors.New("the source directory must not contain local tool state")
 	}
-	dir, err = os.MkdirTemp("", "upok-source-*")
+	dir, err = os.MkdirTemp("", "ship-source-*")
 	if err != nil {
 		return
 	}

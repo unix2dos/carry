@@ -312,32 +312,96 @@ func TestCompletedHistoryIsStable(t *testing.T) {
 }
 
 func TestLegacyMarkerSurvivesRename(t *testing.T) {
+	for _, prefix := range []string{"upok:", "pdeploy:"} {
+		t.Run(prefix, func(t *testing.T) {
+			e, p := fixture(t)
+			op, err := newOperation(p.Name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.HasPrefix(op.Marker, "ship:") {
+				t.Fatal("new operation did not use the Ship marker")
+			}
+			op.Marker = prefix + op.ID
+			op.State = "unknown"
+			if err = e.Store.saveOp(&op); err != nil {
+				t.Fatal(err)
+			}
+			e.Providers.Run = func(_ context.Context, tool string, args []string) ([]byte, error) {
+				if tool != "railway" || args[0] != "deployment" {
+					t.Fatalf("unexpected mutation or query during reconciliation: %s %v", tool, args)
+				}
+				return jsonBytes([]any{map[string]any{"id": "legacy-deployment", "status": "SLEEPING", "meta": map[string]string{"cliMessage": op.Marker}}}), nil
+			}
+			result, err := e.reconcile(context.Background(), p, false)
+			if err != nil || result.State != "deployed" || result.Marker != op.Marker || result.DeploymentID != "legacy-deployment" {
+				t.Fatalf("legacy operation was not reconciled intact: %v", err)
+			}
+		})
+	}
 	e, p := fixture(t)
-	op, err := newOperation(p.Name)
+	for _, name := range []string{".pdeploy", ".upok", ".ship"} {
+		if err := os.Mkdir(filepath.Join(p.Source, name), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(p.Source, name, "settings.json"), []byte("private-state"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	stage, _, count, err := bundleSource(p.Source, e.Store.Root, []string{"private-state"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(op.Marker, "upok:") {
-		t.Fatal("new operation did not use the UpOK marker")
+	defer os.RemoveAll(stage)
+	if count != 1 {
+		t.Fatal("private state entered the source upload")
 	}
-	op.Marker = "pdeploy:" + op.ID
-	op.State = "unknown"
-	if err = e.Store.saveOp(&op); err != nil {
+}
+
+func TestRenameReusesExistingState(t *testing.T) {
+	base := t.TempDir()
+	shipDir := filepath.Join(base, "ship")
+	if defaultStateDir(base) != shipDir {
+		t.Fatal("fresh installation did not select Ship state")
+	}
+	legacy, err := newStore(filepath.Join(base, "upok"))
+	if err != nil {
 		t.Fatal(err)
 	}
-	e.Providers.Run = func(_ context.Context, tool string, args []string) ([]byte, error) {
-		if tool != "railway" || args[0] != "deployment" {
-			t.Fatalf("unexpected mutation or query during reconciliation: %s %v", tool, args)
-		}
-		return jsonBytes([]any{map[string]any{"id": "legacy-deployment", "status": "SLEEPING", "meta": map[string]string{"cliMessage": op.Marker}}}), nil
+	_, p := fixture(t)
+	if err = legacy.register(p); err != nil {
+		t.Fatal(err)
 	}
-	result, err := e.reconcile(context.Background(), p, false)
-	if err != nil || result.State != "deployed" || result.Marker != op.Marker || result.DeploymentID != "legacy-deployment" {
-		t.Fatalf("legacy operation was not reconciled intact: %v", err)
+	reopened, err := newStore(defaultStateDir(base))
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, name := range []string{".pdeploy", ".upok"} {
-		if !excluded(name) {
-			t.Fatalf("private state directory can enter an upload: %s", name)
-		}
+	got, err := reopened.project(p.Name)
+	if err != nil || got != p {
+		t.Fatal("rename lost an existing project or its authorizations")
+	}
+	if _, err = os.Stat(shipDir); !os.IsNotExist(err) {
+		t.Fatal("legacy state was split into a new directory")
+	}
+	if _, err = newStore(shipDir); err != nil {
+		t.Fatal(err)
+	}
+	if defaultStateDir(base) != shipDir {
+		t.Fatal("existing Ship state was replaced with legacy state")
+	}
+}
+
+func TestLegacyToolEnvironment(t *testing.T) {
+	t.Setenv("SHIP_RAILWAY_BIN", "")
+	t.Setenv("UPOK_RAILWAY_BIN", "/legacy/railway")
+	resolve := func(explicit string) string {
+		return resolveTool(explicit, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway")
+	}
+	if resolve("") != "/legacy/railway" {
+		t.Fatal("legacy tool override was lost")
+	}
+	t.Setenv("SHIP_RAILWAY_BIN", "/ship/railway")
+	if resolve("") != "/ship/railway" || resolve("/explicit/railway") != "/explicit/railway" {
+		t.Fatal("tool override priority changed")
 	}
 }

@@ -1,4 +1,4 @@
-# UpOK：内部试验版
+# Ship：内部试验版
 
 本版把已验证的 Railway + Neon 链路接入 CLI 和极简网页。它关联已有资源，读取真实状态与日志，将当前 Dockerfile 项目发布到指定服务，并记录操作以供中断后核对。原型的模拟页面仍保留在 `docs/prototypes`，这里运行的是实际工具。
 
@@ -10,26 +10,28 @@
 
 ```sh
 sh scripts/install.sh
-cd "$HOME/.local/share/upok"
-./bin/upok serve --open
+cd "$HOME/.local/share/ship"
+./bin/ship serve --open
 ```
 
-安装程序编译 UpOK，并安装锁定版本的官方 CLI 到同一目录。它不需要 sudo，不修改 shell 或全局 npm 包，也不会登录云账号或创建云资源。安装需要网络下载依赖；完成后不依赖原源码目录。其他平台尚未验收，安装程序会明确停止。
+安装程序编译 Ship，并安装锁定版本的官方 CLI 到同一目录。它不需要 sudo，不修改 shell 或全局 npm 包，也不会登录云账号或创建云资源。安装需要网络下载依赖；完成后不依赖原源码目录。其他平台尚未验收，安装程序会明确停止。
 
-默认安装目录为 `~/.local/share/upok`；可把一个尚不存在的绝对路径作为脚本参数。已有目录不会被覆盖，升级时先安装到另一个目录。云登录与 UpOK 的项目状态保存在安装目录以外，切换可执行文件不需要重新登记。
+默认安装目录为 `~/.local/share/ship`；可把一个尚不存在的绝对路径作为脚本参数。已有目录不会被覆盖，升级时先安装到另一个目录。云登录与 Ship 的项目状态保存在安装目录以外，切换可执行文件不需要重新登记。
 
-以下 `./bin/upok` 和 `./tools/…` 命令均从安装目录运行。已有部署管理记录但没有供应商登录时，仍可打开网页查看本地记录；刷新和发布需要先完成登录。
+从 UpOK 升级时，先关闭旧的本地服务，再启动 Ship。若用户配置目录中还没有 `ship`，工具会沿用已有的 `upok` 目录，保留项目、授权和发布历史；`--state-dir` 可显式指定目录。旧的 `UPOK_RAILWAY_BIN` / `UPOK_NEON_BIN` 环境变量仍可用，新的 `SHIP_*` 变量优先；显式参数和已保存的工具路径维持原有优先级。旧安装可留存供已有工具路径使用。历史 `upok:` / `pdeploy:` 发布标记保持原值，新操作使用 `ship:`。
+
+以下 `./bin/ship` 和 `./tools/…` 命令均从安装目录运行。已有部署管理记录但没有供应商登录时，仍可打开网页查看本地记录；刷新和发布需要先完成登录。
 
 ### 开发者直接构建
 
 在项目根目录：
 
 ```sh
-# 首次从源码准备；已有 bin/upok 时可直接启动。
+# 首次从源码准备；已有 bin/ship 时可直接启动。
 npm ci --prefix validation/cloud-tools --no-audit --no-fund
-go build -buildvcs=false -o bin/upok ./cmd/upok
+go build -buildvcs=false -o bin/ship ./cmd/ship
 
-./bin/upok serve --open
+./bin/ship serve --open
 ```
 
 `-buildvcs=false` 让 Git 工作目录与源码归档采用相同的构建命令。构建后运行程序不需要本地 Docker 或 Go 编译器；官方 CLI 仍是运行依赖。
@@ -50,10 +52,10 @@ env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
 
 当前需先有 Railway 服务、Neon PostgreSQL 和可用应用地址。可让现有 Agent 从用户选定的账号查询资源 ID，再调用下方登记命令；界面尚未提供自动创建资源或账号选择器。内部版不会启用付费。
 
-一次登记后，资源标识、源码路径和工具路径保存到用户配置目录下的 `upok`（macOS 为 `~/Library/Application Support/upok`）。文件权限为 0600，目录为 0700；云令牌与数据库连接串不写入这些记录。
+新安装默认将资源标识、源码路径和工具路径保存到用户配置目录下的 `ship`（macOS 为 `~/Library/Application Support/ship`）；已有 UpOK 用户沿用上文所述旧目录。文件权限为 0600，目录为 0700；云令牌与数据库连接串不写入这些记录。
 
 ```sh
-./bin/upok register \
+./bin/ship register \
   --name demo --source /path/to/your/project --url https://your-app.example \
   --workspace WORKSPACE_ID --railway-project PROJECT_ID \
   --service SERVICE_ID --environment ENVIRONMENT_ID \
@@ -67,18 +69,18 @@ CLI 二进制位置可用 `--railway-bin`、`--neon-bin` 指定；首次登记�
 
 ## 让现有 Agent 使用
 
-把本次安装中的 `skills/upok/SKILL.md` 提供给能够在本机执行命令的编码 Agent，例如：“阅读这里的 UpOK Skill，帮我关联自己的已有应用，并检查状态。”它与 CLI、网页使用同一份记录。此安装不会自动修改 Agent 配置或全局安装 Skill。
+把本次安装中的 `skills/ship/SKILL.md` 提供给能够在本机执行命令的编码 Agent，例如：“阅读这里的 Ship Skill，帮我关联自己的已有应用，并检查状态。”它与 CLI、网页使用同一份记录。此安装不会自动修改 Agent 配置或全局安装 Skill。
 
 ## 常用操作
 
 ```sh
-./bin/upok list
-./bin/upok status demo
-./bin/upok check demo
-./bin/upok logs demo
-./bin/upok publish demo --detach
-./bin/upok reconcile demo --wait
-./bin/upok history demo
+./bin/ship list
+./bin/ship status demo
+./bin/ship check demo
+./bin/ship logs demo
+./bin/ship publish demo --detach
+./bin/ship reconcile demo --wait
+./bin/ship history demo
 ```
 
 `status` 查询供应商管理接口，不主动访问应用；`check` 会访问 `/healthz` 与 `/readyz`，可能唤醒休眠实例。内部版采用已验证的这两个公开检查路径，不对业务数据发起写操作。发布后的服务状态与 HTTP 检查分别记录，网络超时不会被改写成供应商部署失败。
@@ -104,11 +106,11 @@ CLI 二进制位置可用 `--railway-bin`、`--neon-bin` 指定；首次登记�
 ## 开发检查
 
 ```sh
-go test -race ./cmd/upok
-go vet ./cmd/upok
-python3 validation/install-smoke.py "$HOME/.local/share/upok"
+go test -race ./cmd/ship
+go vet ./cmd/ship
+python3 validation/install-smoke.py "$HOME/.local/share/ship"
 ```
 
 安装检查从临时空白状态启动网页，核对固定 CLI 版本、页面、本地认证和来源限制，不调用云平台，也不读取现有项目记录。
 
-测试覆盖丢失提交响应后的核对、重复提交阻止、费用与归属约束、私有状态、凭证过滤、源码上传边界和本地 HTTP 认证。配套 [Skill](../skills/upok/SKILL.md)随仓库提供，尚未全局安装，也未宣称跨 Agent 验收完成。
+测试覆盖丢失提交响应后的核对、重复提交阻止、费用与归属约束、私有状态、凭证过滤、源码上传边界和本地 HTTP 认证。配套 [Skill](../skills/ship/SKILL.md)随仓库提供，尚未全局安装，也未宣称跨 Agent 验收完成。

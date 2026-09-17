@@ -13,10 +13,10 @@ import (
 	"syscall"
 )
 
-const help = `upok — internal alpha, existing Railway + Neon project bindings
+const help = `ship — internal alpha, existing Railway + Neon project bindings
 
 Global flags (before command):
-  --state-dir PATH       Private local records (default: user config directory/upok)
+  --state-dir PATH       Private local records (default: config/ship; existing config/upok reused)
   --railway-bin PATH     Official Railway CLI binary; no global installation is performed
   --neon-bin PATH        Official Neon CLI
   --neon-config PATH     Existing private Neon authentication directory
@@ -42,12 +42,14 @@ All non-server command outputs are JSON. State files contain resource references
 not cloud credentials. Use one explicit project authorization for regular updates.
 `
 
-func resolveTool(explicit, envName, name, relative string) string {
+func resolveTool(explicit, envName, legacyEnvName, name, relative string) string {
 	if explicit != "" {
 		return explicit
 	}
-	if v := os.Getenv(envName); v != "" {
-		return v
+	for _, key := range []string{envName, legacyEnvName} {
+		if v := os.Getenv(key); v != "" {
+			return v
+		}
 	}
 	binary, _ := os.Executable()
 	if real, err := filepath.EvalSymlinks(binary); err == nil {
@@ -65,6 +67,16 @@ func resolveTool(explicit, envName, name, relative string) string {
 		return p
 	}
 	return ""
+}
+
+func defaultStateDir(base string) string {
+	for _, name := range []string{"ship", "upok"} {
+		path := filepath.Join(base, name)
+		if _, err := os.Lstat(path); !os.IsNotExist(err) {
+			return path
+		}
+	}
+	return filepath.Join(base, "ship")
 }
 
 type Settings struct {
@@ -94,8 +106,8 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	flags := flag.NewFlagSet("upok", flag.ContinueOnError)
-	stateDir := flags.String("state-dir", filepath.Join(base, "upok"), "private local state")
+	flags := flag.NewFlagSet("ship", flag.ContinueOnError)
+	stateDir := flags.String("state-dir", defaultStateDir(base), "private local state")
 	rwy := flags.String("railway-bin", "", "official Railway CLI")
 	neon := flags.String("neon-bin", "", "official Neon CLI")
 	neonConfig := flags.String("neon-config", "", "Neon authentication directory")
@@ -131,7 +143,7 @@ func run(ctx context.Context, args []string) error {
 	if settings.NeonConfig == "" {
 		settings.NeonConfig = filepath.Join(home, ".config", "neon")
 	}
-	providers := &Providers{Railway: resolveTool(settings.Railway, "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway"), Neon: resolveTool(settings.Neon, "UPOK_NEON_BIN", "neon", ".bin/neon"), NeonConfig: settings.NeonConfig}
+	providers := &Providers{Railway: resolveTool(settings.Railway, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway"), Neon: resolveTool(settings.Neon, "SHIP_NEON_BIN", "UPOK_NEON_BIN", "neon", ".bin/neon"), NeonConfig: settings.NeonConfig}
 	engine := &Engine{Store: store, Providers: providers}
 	switch args[0] {
 	case "register":
@@ -290,7 +302,7 @@ func run(ctx context.Context, args []string) error {
 		}
 		return err
 	default:
-		return errors.New("unknown command; run upok help")
+		return errors.New("unknown command; run ship help")
 	}
 	return nil
 }
