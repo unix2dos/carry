@@ -360,8 +360,9 @@ func TestLegacyMarkerSurvivesRename(t *testing.T) {
 
 func TestRenameReusesExistingState(t *testing.T) {
 	base := t.TempDir()
-	shipDir := filepath.Join(base, "ship")
-	if defaultStateDir(base) != shipDir {
+	home := filepath.Join(base, "home")
+	shipDir := filepath.Join(home, ".ship")
+	if defaultStateDir(home, base) != shipDir {
 		t.Fatal("fresh installation did not select Ship state")
 	}
 	legacy, err := newStore(filepath.Join(base, "upok"))
@@ -372,7 +373,7 @@ func TestRenameReusesExistingState(t *testing.T) {
 	if err = legacy.register(p); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := newStore(defaultStateDir(base))
+	reopened, err := newStore(defaultStateDir(home, base))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -386,7 +387,7 @@ func TestRenameReusesExistingState(t *testing.T) {
 	if _, err = newStore(shipDir); err != nil {
 		t.Fatal(err)
 	}
-	if defaultStateDir(base) != shipDir {
+	if defaultStateDir(home, base) != shipDir {
 		t.Fatal("existing Ship state was replaced with legacy state")
 	}
 }

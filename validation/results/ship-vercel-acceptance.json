@@ -1,0 +1,86 @@
+{
+  "recorded_at": "2026-09-17T14:31:26.242396+00:00",
+  "status": "vercel_hobby_ship_deploy_update_and_postgres_acceptance_passed",
+  "scope": "Existing personal Vercel Hobby container project plus existing Neon Free; Go sample; macOS arm64",
+  "public_url": "https://upok-vercel-20260917-go.vercel.app",
+  "secret_disposition": "user_approved_diagnosed_not_applied_with_original_evidence_retained",
+  "business_secrets_rewritten": false,
+  "business_secret_metadata_unchanged": true,
+  "plan": {
+    "vercel": "hobby",
+    "neon": "free"
+  },
+  "database_binding_evidence": "provider_secret_retained_not_readable",
+  "versions": {
+    "before": "vercel-v1-source2",
+    "first": "vercel-v1-ship-alpha1",
+    "updated": "vercel-v1-ship-alpha2"
+  },
+  "deployments": [
+    {
+      "id": "1789654753902211000-3b25d93b2bfdb546",
+      "state": "deployed",
+      "deployment_id": "dpl_rjWADdQ3PiFAZUtNJovUvvBmTtWf",
+      "provider_state": "READY",
+      "source_sha256": "bb3fca89395db5c324432a5cce510ecd1acf7dd40d19af6cbc3b48295aa5150e",
+      "source_files": 7,
+      "checks": [
+        {
+          "path": "/healthz",
+          "ok": true,
+          "http_status": 200,
+          "version": "vercel-v1-ship-alpha1"
+        },
+        {
+          "path": "/readyz",
+          "ok": true,
+          "http_status": 200
+        }
+      ]
+    },
+    {
+      "id": "1789655019091375000-8bf0ded6d7f0edbb",
+      "state": "deployed",
+      "deployment_id": "dpl_BKmooAyqLZiPQNRAMwvzvvUUQiUs",
+      "provider_state": "READY",
+      "source_sha256": "4f10c0d7fadda67de6cacf809516d6c6c95ee0204a1bda7b6f08be135f8ec236",
+      "source_files": 7,
+      "checks": [
+        {
+          "path": "/healthz",
+          "ok": true,
+          "http_status": 200,
+          "version": "vercel-v1-ship-alpha2"
+        },
+        {
+          "path": "/readyz",
+          "ok": true,
+          "http_status": 200
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "first_full_http_postgres_probe": true,
+    "updated_full_http_postgres_probe": true,
+    "both_retained_records_survived_update": true,
+    "original_railway_record_preserved": true,
+    "temporary_test_record_removed": true,
+    "runtime_log_records": 40,
+    "known_database_url_password_and_validation_token_found_in_log_sample": false,
+    "transport_retries": 0
+  },
+  "boundaries": {
+    "new_cloud_project_created": false,
+    "new_database_created": false,
+    "billing_changed": false,
+    "custom_domain_changed": false,
+    "railway_resource_changed": false
+  },
+  "remaining": [
+    "Independent developer/account reproduction remains pending.",
+    "Windows ACL and file locking have not been implemented or validated.",
+    "Secret values are retained by the provider; generic database identity remains explicitly unverified.",
+    "No claim of a full-month zero bill, all-language Vercel support, or confirmed scale-to-zero behavior."
+  ]
+}

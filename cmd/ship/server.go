@@ -154,7 +154,7 @@ func (a *localAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "method rejected", 405)
 			return
 		}
-		lines, err := a.engine.Providers.logs(ctx, p)
+		lines, err := a.engine.logs(ctx, p)
 		if err != nil {
 			jsonResponse(w, 502, map[string]string{"error": err.Error()})
 			return

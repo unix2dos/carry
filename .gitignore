@@ -8,3 +8,8 @@ __pycache__/
 .venv/
 validation/artifacts/
 bin/
+.vercel/
+*.private.*
+
+# Local Ship records and plaintext business secrets
+.ship/

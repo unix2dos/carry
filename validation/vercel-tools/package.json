@@ -1,0 +1,9 @@
+{
+  "name": "ship-vercel-validation-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned official Vercel CLI for the isolated Ship container validation",
+  "dependencies": {
+    "vercel": "59.20.0"
+  }
+}

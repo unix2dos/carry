@@ -13,19 +13,23 @@ import (
 	"syscall"
 )
 
-const help = `ship — internal alpha, existing Railway + Neon project bindings
+const help = `ship — internal alpha, existing Railway or Vercel + Neon project bindings
 
 Global flags (before command):
-  --state-dir PATH       Private local records (default: config/ship; existing config/upok reused)
+  --state-dir PATH       Private local records (default: ~/.ship; existing legacy state reused)
   --railway-bin PATH     Official Railway CLI binary; no global installation is performed
   --neon-bin PATH        Official Neon CLI
   --neon-config PATH     Existing private Neon authentication directory
+  --vercel-bin PATH      Official Vercel CLI
+  --vercel-config PATH   Existing private Vercel authentication directory
 
 Commands:
-  register --name NAME --source DIR --url HTTPS_ORIGIN
+  register --name NAME --source DIR --url HTTPS_ORIGIN [--provider railway|vercel]
     --workspace ID --railway-project ID --service ID --environment ID
     --neon-org ID --neon-project ID --neon-endpoint ID
     [--allow-publish] [--allow-trial]
+    Vercel: use --vercel-team ID --vercel-project ID instead of Railway IDs;
+            --allow-hobby accepts personal noncommercial use of the Hobby plan
   list
   status NAME           Live read-only ownership, account plan and resource checks
   check NAME            GET /healthz and /readyz; no writes to business data
@@ -33,13 +37,19 @@ Commands:
   publish NAME [--detach]  Upload a captured source directory to the bound service
   reconcile NAME [--wait]  Find the existing operation by its deployment marker
   history NAME
+  secret save NAME KEY --stdin  Save plaintext in an owner-only local file; no cloud changes
+  secret list NAME       List saved secret metadata, never values
+  secret check NAME      Check local secret-file access; does not verify cloud values
+  secret apply NAME KEY  Apply a locally saved Secret to bound Vercel production
+  secret reconcile NAME KEY  Reconcile an uncertain Secret write; never resend
   authorize NAME [--allow-publish=true|false] [--allow-trial=true|false]
   serve [--port 0] [--open]  Loopback-only local webpage with session authentication
 
 Official CLI login remains a user-owned prerequisite. This alpha does not create,
 delete or adopt whole cloud projects, change billing, or migrate databases.
-All non-server command outputs are JSON. State files contain resource references,
-not cloud credentials. Use one explicit project authorization for regular updates.
+All non-server command outputs are JSON. Business secret values are stored separately
+in private local files and never printed. Official CLI login credentials stay with
+the official tools. Use one explicit project authorization for regular updates.
 `
 
 func resolveTool(explicit, envName, legacyEnvName, name, relative string) string {
@@ -56,7 +66,7 @@ func resolveTool(explicit, envName, legacyEnvName, name, relative string) string
 		binary = real
 	}
 	for _, base := range []string{filepath.Dir(binary), filepath.Dir(filepath.Dir(binary))} {
-		for _, directory := range []string{"tools", filepath.Join("validation", "cloud-tools")} {
+		for _, directory := range []string{"tools", filepath.Join("validation", "cloud-tools"), filepath.Join("validation", "vercel-tools")} {
 			p := filepath.Join(base, directory, "node_modules", relative)
 			if info, e := os.Stat(p); e == nil && !info.IsDir() {
 				return p
@@ -69,20 +79,21 @@ func resolveTool(explicit, envName, legacyEnvName, name, relative string) string
 	return ""
 }
 
-func defaultStateDir(base string) string {
-	for _, name := range []string{"ship", "upok"} {
-		path := filepath.Join(base, name)
+func defaultStateDir(home, base string) string {
+	for _, path := range []string{filepath.Join(home, ".ship"), filepath.Join(base, "ship"), filepath.Join(base, "upok")} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			return path
 		}
 	}
-	return filepath.Join(base, "ship")
+	return filepath.Join(home, ".ship")
 }
 
 type Settings struct {
-	Railway    string `json:"railway_bin"`
-	Neon       string `json:"neon_bin"`
-	NeonConfig string `json:"neon_config"`
+	Railway      string `json:"railway_bin"`
+	Neon         string `json:"neon_bin"`
+	NeonConfig   string `json:"neon_config"`
+	Vercel       string `json:"vercel_bin,omitempty"`
+	VercelConfig string `json:"vercel_config,omitempty"`
 }
 
 func output(v any) { enc := json.NewEncoder(os.Stdout); enc.SetIndent("", "  "); enc.Encode(v) }
@@ -107,10 +118,12 @@ func run(ctx context.Context, args []string) error {
 		return err
 	}
 	flags := flag.NewFlagSet("ship", flag.ContinueOnError)
-	stateDir := flags.String("state-dir", defaultStateDir(base), "private local state")
+	stateDir := flags.String("state-dir", defaultStateDir(home, base), "private local state")
 	rwy := flags.String("railway-bin", "", "official Railway CLI")
 	neon := flags.String("neon-bin", "", "official Neon CLI")
 	neonConfig := flags.String("neon-config", "", "Neon authentication directory")
+	vercel := flags.String("vercel-bin", "", "official Vercel CLI")
+	vercelConfig := flags.String("vercel-config", "", "Vercel authentication directory")
 	flags.Usage = func() { fmt.Print(help) }
 	if err = flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -140,15 +153,38 @@ func run(ctx context.Context, args []string) error {
 	if *neonConfig != "" {
 		settings.NeonConfig = *neonConfig
 	}
+	if *vercel != "" {
+		settings.Vercel = *vercel
+	}
+	if *vercelConfig != "" {
+		settings.VercelConfig = *vercelConfig
+	}
 	if settings.NeonConfig == "" {
 		settings.NeonConfig = filepath.Join(home, ".config", "neon")
 	}
-	providers := &Providers{Railway: resolveTool(settings.Railway, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway"), Neon: resolveTool(settings.Neon, "SHIP_NEON_BIN", "UPOK_NEON_BIN", "neon", ".bin/neon"), NeonConfig: settings.NeonConfig}
+	providers := &Providers{Railway: resolveTool(settings.Railway, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway"), Neon: resolveTool(settings.Neon, "SHIP_NEON_BIN", "UPOK_NEON_BIN", "neon", ".bin/neon"), NeonConfig: settings.NeonConfig, Vercel: resolveTool(settings.Vercel, "SHIP_VERCEL_BIN", "UPOK_VERCEL_BIN", "vercel", ".bin/vercel"), VercelConfig: settings.VercelConfig, Store: store}
 	engine := &Engine{Store: store, Providers: providers}
 	switch args[0] {
+	case "secret":
+		if len(args) == 4 && (args[1] == "apply" || args[1] == "reconcile") {
+			p, err := store.project(args[2])
+			if err != nil {
+				return errors.New("registered project not found")
+			}
+			info, err := engine.syncVercelSecret(ctx, p, args[3], args[1] == "apply")
+			if err == nil {
+				output(info)
+			}
+			return err
+		}
+		return secretCommand(store, args[1:], os.Stdin)
 	case "register":
 		f := flag.NewFlagSet("register", flag.ContinueOnError)
 		var p Project
+		f.StringVar(&p.Provider, "provider", "railway", "compute provider")
+		f.StringVar(&p.VercelTeam, "vercel-team", "", "Vercel team ID")
+		f.StringVar(&p.VercelProject, "vercel-project", "", "Vercel project ID")
+		f.BoolVar(&p.AllowHobby, "allow-hobby", false, "accept personal noncommercial Hobby conditions")
 		f.StringVar(&p.Name, "name", "", "local project name")
 		f.StringVar(&p.Source, "source", "", "source directory")
 		f.StringVar(&p.URL, "url", "", "application HTTPS origin")
@@ -179,7 +215,7 @@ func run(ctx context.Context, args []string) error {
 		if err = store.register(p); err != nil {
 			return err
 		}
-		if err = atomicJSON(filepath.Join(store.Root, "settings.json"), Settings{providers.Railway, providers.Neon, providers.NeonConfig}); err != nil {
+		if err = atomicJSON(filepath.Join(store.Root, "settings.json"), Settings{Railway: providers.Railway, Neon: providers.Neon, NeonConfig: providers.NeonConfig, Vercel: providers.Vercel, VercelConfig: providers.VercelConfig}); err != nil {
 			return err
 		}
 		output(p)
@@ -215,6 +251,7 @@ func run(ctx context.Context, args []string) error {
 		f := flag.NewFlagSet("authorize", flag.ContinueOnError)
 		f.BoolVar(&p.AllowPublish, "allow-publish", p.AllowPublish, "authorization for future source updates to this exact service")
 		f.BoolVar(&p.AllowTrial, "allow-trial", p.AllowTrial, "accept Trial conditions for this binding")
+		f.BoolVar(&p.AllowHobby, "allow-hobby", p.AllowHobby, "accept personal noncommercial Hobby conditions")
 		if err = f.Parse(args[2:]); err != nil {
 			return err
 		}
@@ -257,7 +294,7 @@ func run(ctx context.Context, args []string) error {
 		if len(args) != 2 {
 			return errors.New("unexpected logs arguments")
 		}
-		logs, err := providers.logs(ctx, p)
+		logs, err := engine.logs(ctx, p)
 		if err != nil {
 			return err
 		}
