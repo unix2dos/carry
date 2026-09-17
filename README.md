@@ -4,22 +4,22 @@ Local deployment management for your apps, your cloud accounts, and your coding 
 
 Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护应用。网页提供应用列表、日志和发布入口，应用与数据库运行在用户自己的云账号中。
 
-**当前为 Alpha。** 已验证的发布组合是 Railway Trial + Neon Free。正式 Railway Free 和付费账号的发布路径尚未验收，程序会停止这些账号的发布操作。软件采用 MIT 开源；云资源的费用取决于供应商套餐。
+**当前为 Alpha。** 已验证 Railway Trial + Neon Free，以及个人非商业用途的 Vercel Hobby + Neon Free HTTP 容器路径。正式 Railway Free 和付费账号的发布路径尚未验收，程序会停止这些账号的发布操作。软件采用 MIT 开源；云资源的费用与用途限制取决于供应商套餐。
 
 ## 已实现
 
-- 关联已有 Railway 服务与 Neon PostgreSQL，核对资源归属、数据库目标和费用条件。
+- 关联已有 Railway 或 Vercel 项目与 Neon PostgreSQL，核对资源归属和费用条件；数据库连接目标的可核验范围单独显示。
 - 从 Dockerfile 项目发布源码，查看状态、日志和应用访问检查。
 - 保存本地操作记录，中断后核对原部署；结果未知时阻止重复提交。
 - CLI、极简网页和配套 Skill 共用执行逻辑与状态。
 
-核心操作直接调用用户授权的供应商接口，不依赖作者运营的在线后台。首次创建云资源、数据库迁移、无人值守维护和更多供应商尚未实现。
+核心操作直接调用用户授权的供应商接口，不依赖作者运营的在线后台。首次创建云资源、数据库迁移、无人值守维护和其他供应商尚未实现。
 
-当前开发分支使用 `~/.ship` 保存本地记录，业务密钥以受限权限的明文文件单独存放；已移除 macOS 钥匙串依赖。Vercel 适配代码已加入，Vercel 的真实 Secret 写入仍待核实，尚未验收为可用发布路径。[接入状态](validation/results/vercel-adapter-report.json)
+本地记录默认保存在 `~/.ship`，用户主动保存的业务密钥单独以受限权限的明文文件存放。Vercel 普通发布沿用平台已有 Secret，无需先导入或重写；不可读的数据库地址明确标为未核验。[Ship 云端验收](validation/results/ship-vercel-acceptance.json)
 
 ## 安装与启动
 
-目前安装入口仅验收 **macOS arm64**，需要 Go 1.24+、Node.js 20.19+ 和 npm。
+目前安装入口仅验收 **macOS arm64**，需要 Go 1.24+、Node.js 和 npm；Vercel 路径使用 Node.js 24 验收。
 
 ```sh
 git clone https://github.com/unix2dos/ship.git
@@ -57,9 +57,9 @@ cd "$HOME/.local/share/ship"
 - 安装后的工具从空白本地状态关联资源、完成真实发布，再由新进程核对；原 PostgreSQL 数据保留。[安装验收记录](validation/results/upok-install-report.json)
 - Go、Python、Node、Rust 的 Linux/amd64 容器样例通过 29 组本地检查。[本地结果](validation/RESULTS.md)
 - Go 样例完成真实云端部署、更新、自然休眠唤醒与一次配置故障恢复。[云端结果](validation/CLOUD-RESULTS.md)
-- Go 容器另完成 Vercel Hobby + Neon 的独立验证，包含源码更新、数据保留和闲置后访问；用户已确认手动 Chrome 访问正常，自动化浏览器此前的客户端拦截仍未定位，正式 CLI 尚未接入 Vercel。[Vercel 结果](validation/VERCEL-RESULTS.md)
+- Ship CLI 完成 Vercel Hobby + Neon 的两次真实 Go 容器发布、源码更新、PostgreSQL 读写、数据保留和日志检查，沿用原有 Secret。此前独立实验验证过闲置后访问，用户也确认过手动 Chrome 访问；自动化浏览器拦截未定位。[Vercel 结果](validation/VERCEL-RESULTS.md)
 
-外部开发者独立复现、新用户 OAuth、正式 Free、其他本机系统和真实云间迁移仍未验收。早期 PORT 配置快照与运行值的差异保留为未决项。公开报告中的云项目、服务和数据库标识替换为占位符，测试时间、结果与源码指纹保留；本机凭证、个人讨论和原始私有记录不随仓库发布。
+外部开发者独立复现、新用户 OAuth、正式 Railway Free、其他本机系统和真实云间迁移仍未验收。早期 PORT 配置快照与运行值的差异保留为未决项。公开报告中的云项目、服务和数据库标识替换为占位符，测试时间、结果与源码指纹保留；本机凭证、个人讨论和原始私有记录不随仓库发布。
 
 在源码目录运行开发检查：
 
@@ -73,6 +73,8 @@ python3 validation/install-smoke.py "$HOME/.local/share/ship"
 完整容器检查另需本地 Docker 和 OpenSSL，见 [验证说明](validation/README.md)。
 
 ## 设计与反馈
+
+首次外部试用可按 [独立试用清单](docs/FIRST-TRY.md) 进行。
 
 - [产品范围](PRODUCT.md) · [领域术语](CONTEXT.md) · [架构决策](docs/adr/)
 - [平台与兼容性研究](docs/research/)

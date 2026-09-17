@@ -1,6 +1,6 @@
 # Ship：内部试验版
 
-本版把已验证的 Railway + Neon 链路接入 CLI 和极简网页。它关联已有资源，读取真实状态与日志，将当前 Dockerfile 项目发布到指定服务，并记录操作以供中断后核对。原型的模拟页面仍保留在 `docs/prototypes`，这里运行的是实际工具。
+本版把已验证的 Railway Trial / Vercel Hobby + Neon 链路接入 CLI 和极简网页。它关联已有资源，读取真实状态与日志，将当前 Dockerfile 项目发布到指定服务，并记录操作以供中断后核对。原型的模拟页面仍保留在 `docs/prototypes`，这里运行的是实际工具。
 
 当前先在 macOS / arm64 验收。Go 程序仅使用标准库，浏览器资源打包在可执行文件中；沿用项目内固定版本的 Railway 5.57.2、Neon 4.18.0 和 Vercel 59.20.0 官方 CLI。Neon / Vercel CLI 仍需要 Node.js；当前 Vercel 实验使用 Node.js 24。公开安装包、其他系统的完整验收及自动创建资源尚未完成。
 
@@ -50,7 +50,7 @@ env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
 
 浏览器中选择自己的账号，密钥留在官方 CLI 中。Railway 使用 `~/.railway/config.json`，Neon 使用上述显式目录。已有 Neon 登录位于其他目录时，登记项目使用 `--neon-config` 指向它。源码直接构建时，官方 CLI 路径为 `validation/cloud-tools/node_modules/.bin/`。
 
-当前需先有 Railway 服务、Neon PostgreSQL 和可用应用地址。可让现有 Agent 从用户选定的账号查询资源 ID，再调用下方登记命令；界面尚未提供自动创建资源或账号选择器。内部版不会启用付费。
+当前需先有 Railway 服务或 Vercel 项目、Neon PostgreSQL 和可用应用地址。可让现有 Agent 从用户选定的账号查询资源 ID，再调用下方登记命令；界面尚未提供自动创建资源或账号选择器。内部版不会启用付费。
 
 新安装默认将资源标识、源码路径和工具路径保存到 `~/.ship`；已有用户按上文规则沿用旧目录或显式迁移。macOS/Linux 文件权限为 0600，目录为 0700；普通项目记录不包含密钥值，业务密钥单独保存在 `secrets/项目名.json`。官方 CLI 的云账号令牌继续由官方工具管理。
 
@@ -102,7 +102,7 @@ CLI 二进制位置可用 `--railway-bin`、`--neon-bin` 指定；首次登记�
 
 原实验版只保存钥匙串引用的记录，需要先迁移密钥值。迁移应保留引用 ID、时间、云端元数据与 `unknown` 状态，不以迁移触发云端写入。旧记录缺少本地值时明确报错，不能按空值继续。用户本机的本轮迁移与验证单独记录。
 
-开发分支的 Vercel `secret apply NAME KEY` / `secret reconcile NAME KEY` 仍未通过真实写入验收。`apply` 是明确的云端配置写入；`reconcile` 只核对上次标记。未知写入继续保留，不自动重发。存储方式变更不取消这条边界。参见 [当前接入问题](../validation/VERCEL-RESULTS.md)。
+Vercel `secret apply NAME KEY` / `secret reconcile NAME KEY` 是独立的配置操作。创建和更新请求契约已用临时合成变量验证；业务 Secret 没有重写，端到端普通发布不依赖这两个命令。`apply` 是明确的云端配置写入；`reconcile` 只核对上次标记。未知写入继续保留，不自动重发。存储方式变更不取消这条边界。参见 [当前接入问题](../validation/VERCEL-RESULTS.md)。
 
 已保存的值参与源码检查和日志遮蔽；本地文件不可读取时停止依赖它的操作。通用规则和已知值匹配不能发现所有形式的硬编码秘密或日志泄露。运行 Ship 不再需要 macOS 钥匙串或 cgo。当前安装器仍只验收 macOS arm64；Windows 的访问控制和文件锁尚未适配，不能把移除钥匙串依赖视为 Windows 已可用。
 
@@ -118,19 +118,19 @@ CLI 二进制位置可用 `--railway-bin`、`--neon-bin` 指定；首次登记�
 
 ## Vercel 接入的当前边界
 
-开发分支支持绑定已有 Vercel Hobby 项目与 Neon Free。使用已登录的官方 CLI，通过 `--vercel-config` 指定认证目录，登记时指定 `--provider vercel --vercel-team TEAM_ID --vercel-project PROJECT_ID --allow-hobby`，并提供已有应用 URL 与 Neon 标识。`--allow-hobby` 表示用户接受个人非商业用途限制，不代表所有应用都适用。源码目前要求 `Dockerfile.vercel` 和仅含 `{"framework":"container"}` 的 `vercel.json`。
+本版已用 Ship CLI 验收已有 Vercel Hobby 项目与 Neon Free 的发布、更新、读写与数据保留。使用已登录的官方 CLI，通过 `--vercel-config` 指定认证目录，登记时指定 `--provider vercel --vercel-team TEAM_ID --vercel-project PROJECT_ID --allow-hobby`，并提供已有应用 URL 与 Neon 标识。`--allow-hobby` 表示用户接受个人非商业用途限制，不代表所有应用都适用。源码目前要求 `Dockerfile.vercel` 和仅含 `{"framework":"container"}` 的 `vercel.json`。
 
 普通源码发布沿用平台上已有的 Secret，不强制读回、缓存或重写密钥。数据库地址不可读或本地副本已过期时，明确显示“连接目标未核验”；账号归属、套餐条件与变量存在性仍会检查。只有用户明确请求配置变更时才调用 `secret apply`。真正未知的写入仍会阻止后续发布，不能通过删除缓存绕过。
 
 日志按可用的本地已知值和通用格式遮蔽；平台隐藏的、没有本地副本的值可能无法精确匹配，分享前需检查。`/readyz` 成功只说明应用报告数据库就绪，不独立证明连接的是登记的实例。
 
-隔离实验已证实：Secret 更新请求包含 `key` 字段时，Vercel 即使收到相同名字也返回400；移除该字段后更新成功。创建请求仍必须包含 `key`。工具已保留回归检查，并将这类明确拒绝与网络失败等未知结果区分。历史数据库写入没有原始错误回执，当前仍等待用户确认后进行带证据的处置，不会自动重发。[诊断结果](../validation/results/vercel-secret-update-diagnosis.json)
+隔离实验已证实：Secret 更新请求包含 `key` 字段时，Vercel 即使收到相同名字也返回400；移除该字段后更新成功。创建请求仍必须包含 `key`。工具已保留回归检查，并将这类明确拒绝与网络失败等未知结果区分。历史数据库写入没有原始错误回执，用户已明确同意按“经诊断未生效”归档，原引用、标记、时间和诊断证据保留，未重发数据库连接串。[诊断结果](../validation/results/vercel-secret-update-diagnosis.json)
 
 ## 费用与范围
 
-当前唯一已实测的写入路径是明确接受 Trial 的 Railway 账号加 Neon Free；发布还要求无付费订阅或默认支付方式、Trial 额度大于零。其他计费状态保留只读能力，停止发布。正式 Free 不能用 Trial 结果代替：[费用边界](research/2026-09-16-free-plan-boundaries.md)。
+Railway 路径要求明确接受 Trial、无付费订阅或默认支付方式、Trial 额度大于零。Vercel 路径要求当前账号为 Hobby，且用户明确接受个人非商业用途条件。两者都要求登记的 Neon 组织为 Free。其他计费状态停止发布；不把 Railway Trial 结果当成正式 Free：[费用边界](research/2026-09-16-free-plan-boundaries.md)。
 
-本版不承担首次创建项目/数据库、修改云配置、自动付费、资源删除、数据库迁移或通用资源接管。它也没有实现无人值守运维。`PORT` 的早期差异仍未解决，常规发布结果按实际部署和检查验收。
+本版不承担首次创建项目/数据库、自动付费、资源删除、数据库迁移或通用资源接管；云配置写入仅限明确授权的 Vercel Secret 操作。它也没有实现无人值守运维。`PORT` 的早期差异仍未解决，常规发布结果按实际部署和检查验收。
 
 ## 开发检查
 

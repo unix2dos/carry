@@ -1,6 +1,6 @@
 ---
 name: ship
-description: "Manage projects registered with the local ship tool: inspect real Railway and Neon status, publish source, inspect logs, and reconcile interrupted operations. Use for this tool's registered projects; resource creation and database migration are not implemented in its internal alpha."
+description: "Manage projects registered with the local ship tool: inspect real Railway/Vercel and Neon status, publish source, inspect logs, and reconcile interrupted operations. Use for this tool's registered projects; resource creation and database migration are not implemented in its internal alpha."
 ---
 
 # Ship
@@ -20,6 +20,6 @@ Use `logs` for diagnosis; it suppresses known credentials and common secret patt
 
 ## Local secret files
 
-The default state is `~/.ship`; `--state-dir` can select an isolated state. `secret save NAME KEY --stdin` stores plaintext in an owner-only per-project file and does not change cloud configuration. Pass values through stdin from an authorized source; inspect them through `secret list` / `secret check` rather than printing or attaching the files. Preserve reference IDs and unresolved writes during migration. Vercel Secret sync remains experimental; `unknown` requires read-only reconciliation or a user decision, not another apply.
+The default state is `~/.ship`; `--state-dir` can select an isolated state. `secret save NAME KEY --stdin` stores plaintext in an owner-only per-project file and does not change cloud configuration. Pass values through stdin from an authorized source; inspect them through `secret list` / `secret check` rather than printing or attaching the files. Preserve reference IDs and unresolved writes during migration. Secret configuration changes require their own user authorization; `unknown` requires read-only reconciliation or a user decision, not another apply.
 
 Ordinary Vercel source deployment retains existing provider Secrets and does not require importing or rewriting them. Report unreadable database configuration as unverified. Apply secret changes only when configuration changes are authorized; an unknown write still requires reconciliation or an explicit, evidence-backed disposition. Log filtering covers known values and common patterns, not every provider-hidden value.

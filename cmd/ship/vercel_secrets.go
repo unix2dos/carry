@@ -47,6 +47,19 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 		return empty, errors.New("save the Secret in the local private file first")
 	}
 	last := &versions[len(versions)-1]
+	if !apply {
+		pending := false
+		for i := range versions {
+			if versions[i].SyncState == "unknown" || versions[i].SyncState == "applying" {
+				last = &versions[i]
+				pending = true
+				break
+			}
+		}
+		if !pending && (last.SyncState == "diagnosed_not_applied" || last.SyncState == "rejected") {
+			return secretInfoFor(key, versions), nil
+		}
+	}
 	if _, plan, err := e.Providers.vercelAccount(ctx, p); err != nil {
 		return empty, err
 	} else if apply && (plan != "hobby" || !p.AllowHobby || !p.AllowPublish) {
@@ -146,14 +159,6 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 		remote, err = productionSecret(envs, key)
 		if err != nil {
 			return empty, err
-		}
-	} else {
-		// Reconcile the original pending version even if a newer local value was saved meanwhile.
-		for i := range versions {
-			if versions[i].SyncState == "unknown" || versions[i].SyncState == "applying" {
-				last = &versions[i]
-				break
-			}
 		}
 	}
 	if last.Marker == "" || remote == nil || remote.Type != "sensitive" || remote.Comment != last.Marker || (last.RemoteID != "" && remote.ID != last.RemoteID) {

@@ -1,6 +1,6 @@
 # Vercel Hobby：Go 容器与 Neon 验证
 
-2026-09-17。已在个人 Hobby 工作区完成 Go HTTP 容器的云端构建、PostgreSQL 读写、源码更新和数据保留检查。测试直接使用固定版本的官方 CLI，Ship 的正式发布命令尚未接入 Vercel。
+2026-09-17。先通过固定版本官方 CLI 完成独立实验，随后已通过 Ship CLI 完成两轮真实 Go HTTP 容器发布、PostgreSQL 读写、源码更新和数据保留检查。下文保留早期实验与问题诊断；最新结果见 [Ship 验收记录](results/ship-vercel-acceptance.json)。
 
 [公开健康接口](https://upok-vercel-20260917-go.vercel.app/healthz) · [脱敏结果](results/vercel-container-report.json) · [工具与复现准备](vercel-tools/README.md)
 
@@ -69,3 +69,11 @@ Vercel 接入代码已加入本地分支，单元测试覆盖费用/归属限制
 在同一测试项目内创建只含随机合成文本的临时 Secret，依次比较三个请求：v9 + key、v10 + key 均返回400，错误为不允许修改 Sensitive Environment Variable 的 key；v10 不带 key 时成功，元数据出现对应标记。说明字段本身才是决定性差异，而非接口版本。测试变量已删除，DATABASE_URL 与 VALIDATION_TOKEN 的标识、版本及元数据保持不变。
 
 普通源码发布已改为沿用平台已有 Secret；不可读值不被假装核验成功，未知写入仍保留阻止规则。本地回归测试通过，真实 Ship 部署验收尚待原历史记录处置。旧请求的错误文本当时未保存，故历史根因关联来自同请求结构复现与元数据对照，不当作原始回执。源码干跑识别 Container 预设和6个预期文件，没有上传或创建部署。[脱敏实验记录](results/vercel-secret-update-diagnosis.json)
+
+## Ship CLI 完整验收
+
+用户明确同意将旧的未知 Secret 写入按“经诊断未生效”归档。新代码沿用现有平台 Secret，先发布 `vercel-v1-ship-alpha1`，再改动源码发布 `vercel-v1-ship-alpha2`；两次部署 ID 和源码摘要不同，公网接口返回对应版本。原 Railway 验收记录及本轮保留数据在更新后均一致，完整鉴权/输入验证/PostgreSQL 读写通过，临时数据已清理。
+
+读取40条运行日志，取样未发现已知数据库连接串、数据库密码或验证令牌。DATABASE_URL 和 VALIDATION_TOKEN 的平台元数据保持不变，没有新建数据库、升级套餐、修改已有自有域名或调整 Railway 资源。数据库目标身份在通用工具中仍按不可读配置报告未核验；本次受控样例的数据行为另有实际证据。
+
+部署后分别用新的 CLI 进程核对原操作；未新增替代部署来处理未知状态。真实环境中的丢失提交响应故障注入尚未做，此项由本地回归测试覆盖。外部开发者独立复现仍待完成。

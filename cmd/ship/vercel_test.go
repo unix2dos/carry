@@ -213,6 +213,33 @@ func TestVercelDeployRetainsOpaqueProviderSecrets(t *testing.T) {
 	}
 }
 
+func TestDiagnosedSecretHistoryDoesNotReopen(t *testing.T) {
+	f := newVercelFixture(t)
+	records, err := f.e.Store.secretRecords(f.p.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	records["DATABASE_URL"][0].SyncState = "diagnosed_not_applied"
+	records["DATABASE_URL"][0].Resolution = "user-approved diagnosis"
+	path := filepath.Join(f.e.Store.Root, "secrets", f.p.Name+".json")
+	if err = atomicJSON(path, records); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := os.ReadFile(path)
+	f.e.Providers.RunInput = func(context.Context, string, []string, []byte) ([]byte, error) {
+		t.Fatal("archived diagnosis contacted the provider")
+		return nil, nil
+	}
+	info, err := f.e.syncVercelSecret(context.Background(), f.p, "DATABASE_URL", false)
+	if err != nil || info.Status != "write_diagnosed_not_applied" {
+		t.Fatal("archived disposition was reopened")
+	}
+	after, _ := os.ReadFile(path)
+	if string(before) != string(after) {
+		t.Fatal("historical disposition changed")
+	}
+}
+
 func TestVercelBoundariesAndDeploymentReconciliation(t *testing.T) {
 	f := newVercelFixture(t)
 	ctx := context.Background()
