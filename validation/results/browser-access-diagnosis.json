@@ -1,6 +1,6 @@
 {
   "recorded_at": "2026-09-17T08:35:26.781992+00:00",
-  "status": "awaiting_manual_chrome_comparison",
+  "status": "manual_chrome_access_confirmed_automation_path_unresolved",
   "url": "https://upok-vercel-20260917-go.vercel.app/healthz",
   "http_client": {
     "http_status": 200,
@@ -26,5 +26,21 @@
   "manual_comparison": "User asked to open the same HTTPS URL directly in Chrome and report the visible result",
   "browser_proxy_or_extension_settings_changed": false,
   "vercel_adapter_started": false,
-  "note": "The inspector reason narrows the failure to the browser debugging/control path; it does not identify a particular extension or prove the application is failing."
+  "note": "User confirmed manual Chrome access. Controlled Chrome previously reported inspector blocking; that path has not been fixed or revalidated. Ordinary browser access no longer blocks adapter evaluation.",
+  "manual_comparison_result": {
+    "recorded_at": "2026-09-17T09:54:22.482485+00:00",
+    "source": "user_report",
+    "browser": "Chrome",
+    "result": "JSON visible with status ok and a version field",
+    "exact_version_reported": false
+  },
+  "http_recheck": {
+    "http_status": 200,
+    "tls_verified": true,
+    "body": {
+      "status": "ok",
+      "version": "vercel-v1-source2"
+    },
+    "retries": 0
+  }
 }

@@ -50,11 +50,11 @@ cd "$HOME/.local/share/ship"
 
 截至 2026-09-17：
 
-- 9 组 Go 检查、race 检测、`go vet`、前端语法与安装检查通过。
+- Go 检查、race 检测、`go vet`、前端语法与安装检查通过，包括改名后的旧状态与发布记录兼容检查。
 - 安装后的工具从空白本地状态关联资源、完成真实发布，再由新进程核对；原 PostgreSQL 数据保留。[安装验收记录](validation/results/upok-install-report.json)
 - Go、Python、Node、Rust 的 Linux/amd64 容器样例通过 29 组本地检查。[本地结果](validation/RESULTS.md)
 - Go 样例完成真实云端部署、更新、自然休眠唤醒与一次配置故障恢复。[云端结果](validation/CLOUD-RESULTS.md)
-- Go 容器另完成 Vercel Hobby + Neon 的独立验证，包含源码更新、数据保留和闲置后访问；当前 Chrome 存在客户端拦截，正式 CLI 尚未接入 Vercel。[Vercel 结果](validation/VERCEL-RESULTS.md)
+- Go 容器另完成 Vercel Hobby + Neon 的独立验证，包含源码更新、数据保留和闲置后访问；用户已确认手动 Chrome 访问正常，自动化浏览器此前的客户端拦截仍未定位，正式 CLI 尚未接入 Vercel。[Vercel 结果](validation/VERCEL-RESULTS.md)
 
 外部开发者独立复现、新用户 OAuth、正式 Free、其他本机系统和真实云间迁移仍未验收。早期 PORT 配置快照与运行值的差异保留为未决项。公开报告中的云项目、服务和数据库标识替换为占位符，测试时间、结果与源码指纹保留；本机凭证、个人讨论和原始私有记录不随仓库发布。
 

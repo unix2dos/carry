@@ -28,11 +28,13 @@
 
 在样例 `vercel.json` 中显式设置 `{"framework":"container"}` 后，预检识别为 Container，后续日志确认真实Docker构建，业务检查通过。发布流程必须同时验证预设、构建产物和应用响应。
 
-### 当前 Chrome 打开默认域名被客户端拦截
+### 自动化 Chrome 曾被客户端拦截，手动访问已确认
 
-匿名 curl 的实际HTTP与数据库检查通过，但本机 Chrome 导航到同一健康接口时返回 `net::ERR_BLOCKED_BY_CLIENT`。没有修改浏览器扩展、代理或网络规则；具体拦截来源尚未确定。浏览器访问验收保留为未通过，不能用CLI成功替代。
+匿名 curl 的实际HTTP与数据库检查通过，但工具控制的 Chrome 导航到同一健康接口时返回 `net::ERR_BLOCKED_BY_CLIENT`。没有修改浏览器扩展、代理或网络规则；具体拦截来源尚未确定。
 
-后续只读诊断再次复现两次，Chrome 网络事件报告 `blockedReason: inspector`，未观察到主文档的服务端响应；同址 curl 返回200和正确版本。这把范围缩小到浏览器调试或控制路径，但还不能确定具体扩展或组件。浏览器工具的URL安全策略拒绝读取 `chrome://extensions/`，未尝试绕过。已请求用户手动在Chrome打开同址作对照，适配器实现等待此项讨论结果。[诊断记录](results/browser-access-diagnosis.json)
+后续只读诊断再次复现两次，Chrome 网络事件报告 `blockedReason: inspector`，未观察到主文档的服务端响应；同址 curl 返回200和正确版本。这把范围缩小到浏览器调试或控制路径，但还不能确定具体扩展或组件。浏览器工具的URL安全策略拒绝读取 `chrome://extensions/`，未尝试绕过。
+
+用户随后手动在 Chrome 打开同一地址，报告能看到 `status: ok` 和版本字段的 JSON；用户没有逐字提供版本号。同轮 curl 复查返回200、TLS校验通过、版本为 `vercel-v1-source2`。普通浏览器访问已由用户确认，可继续评估适配器；工具控制路径没有重新验收，也未宣称已修复。[诊断记录](results/browser-access-diagnosis.json)
 
 ## 费用证据的边界
 
@@ -45,3 +47,11 @@
 Vercel HTTP容器与外部PostgreSQL的组合已有实际证据，可继续评估为个人非商用应用的可选路径。原有20个本地样例/检查文件保持原始指纹；本轮只在隔离副本中添加Vercel配置和源码版本标识。
 
 正式适配仍需实现Vercel的资源关联、费用预检、部署元数据核对与状态展示。其他语言、独立用户流程和提交响应丢失后的恢复需要分别验收。
+
+## 适配前发现的 Secret 边界（待用户讨论）
+
+同日只读调用已有测试项目的环境变量接口，`DATABASE_URL` 和 `VALIDATION_TOKEN` 均为 `type: sensitive`、`visibility: secret`、作用于 `production`，响应不包含值。`PORT`、`APP_VERSION` 和 `DATABASE_SSLMODE` 为可读 Config。未修改变量，也未将凭证改为可读配置。
+
+Vercel 官方说明 Secret 保存后只写不可读。因此当前 Railway 实现中依靠读回完整变量进行的数据库目标核对、已知密钥源码扫描和日志精确脱敏，不能原样移植。`/readyz` 成功只能证明应用自报数据库就绪，不能证明它连接的是登记的 Neon 数据库；供应商的构建日志遮蔽也不能代替 Ship 对所有运行日志的脱敏承诺。[Secret 官方说明](https://vercel.com/docs/environment-variables/sensitive-environment-variables)
+
+建议讨论的最小范围：保留 Secret；先实现已有计算项目的关联、费用与归属检查、部署、状态和中断核对。数据库分别展示资源归属与应用就绪证据，连接目标明确标为未核验；本版暂不通过 Ship 返回 Vercel 原始日志，用户在官方控制台查看。源码继续排除本地状态和敏感配置文件，但不得声称已与所有云端 Secret 值比对。是否接受这组能力边界，由用户确认后再实现。

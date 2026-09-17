@@ -1,6 +1,6 @@
 {
   "recorded_at": "2026-09-17T08:14:57.986859+00:00",
-  "status": "http_container_and_postgres_poc_passed_browser_check_blocked",
+  "status": "http_container_and_postgres_poc_passed_manual_browser_confirmed",
   "scope": "Standalone official Vercel CLI validation; not an UpOK provider adapter",
   "public_url": "https://upok-vercel-20260917-go.vercel.app",
   "tools": {
@@ -103,10 +103,12 @@
   "browser_verification": {
     "chrome_public_navigation": "blocked",
     "error": "net::ERR_BLOCKED_BY_CLIENT",
-    "browser_or_proxy_settings_changed": false
+    "browser_or_proxy_settings_changed": false,
+    "manual_chrome_public_navigation": "passed according to user report; status ok and version JSON visible",
+    "automated_path_revalidated": false
   },
   "remaining": [
-    "Diagnose the current Chrome client-side block before calling browser access validated.",
+    "Controlled Chrome previously failed with inspector blocking; user-reported manual Chrome access succeeded. Automated-browser cause remains unresolved.",
     "No controlled loss-of-submit-response, quota exhaustion, or full-month bill verification on Vercel.",
     "No Rust/Python/Node application deployment on Vercel; this run validates the Go container only.",
     "No provider-reported scale-to-zero observation; the idle probe measures first access after six minutes without test requests.",
