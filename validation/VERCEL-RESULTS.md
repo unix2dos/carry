@@ -32,6 +32,8 @@
 
 匿名 curl 的实际HTTP与数据库检查通过，但本机 Chrome 导航到同一健康接口时返回 `net::ERR_BLOCKED_BY_CLIENT`。没有修改浏览器扩展、代理或网络规则；具体拦截来源尚未确定。浏览器访问验收保留为未通过，不能用CLI成功替代。
 
+后续只读诊断再次复现两次，Chrome 网络事件报告 `blockedReason: inspector`，未观察到主文档的服务端响应；同址 curl 返回200和正确版本。这把范围缩小到浏览器调试或控制路径，但还不能确定具体扩展或组件。浏览器工具的URL安全策略拒绝读取 `chrome://extensions/`，未尝试绕过。已请求用户手动在Chrome打开同址作对照，适配器实现等待此项讨论结果。[诊断记录](results/browser-access-diagnosis.json)
+
 ## 费用证据的边界
 
 官方CLI的 `vercel usage` 在此Hobby账号上未返回计费数据，未将它当作用量为零。网页确认了实际套餐和各项额度，但新镜像已经出现在registry时，用量页面仍显示镜像存储为0，说明存在统计延迟。

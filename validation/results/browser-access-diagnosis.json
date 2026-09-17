@@ -1,0 +1,30 @@
+{
+  "recorded_at": "2026-09-17T08:35:26.781992+00:00",
+  "status": "awaiting_manual_chrome_comparison",
+  "url": "https://upok-vercel-20260917-go.vercel.app/healthz",
+  "http_client": {
+    "http_status": 200,
+    "tls_verified": true,
+    "body": {
+      "language": "go",
+      "status": "ok",
+      "version": "vercel-v1-source2"
+    }
+  },
+  "controlled_chrome": {
+    "reproductions": 2,
+    "error": "net::ERR_BLOCKED_BY_CLIENT",
+    "cdp_blocked_reason": "inspector",
+    "document_response_received": false,
+    "root_component_identified": false
+  },
+  "tool_boundary": {
+    "attempted_read_only_page": "chrome://extensions/",
+    "result": "rejected by Browser Use URL security policy",
+    "workaround_attempted": false
+  },
+  "manual_comparison": "User asked to open the same HTTPS URL directly in Chrome and report the visible result",
+  "browser_proxy_or_extension_settings_changed": false,
+  "vercel_adapter_started": false,
+  "note": "The inspector reason narrows the failure to the browser debugging/control path; it does not identify a particular extension or prove the application is failing."
+}
