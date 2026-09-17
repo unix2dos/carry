@@ -1,0 +1,115 @@
+{
+  "recorded_at": "2026-09-17T08:14:57.986859+00:00",
+  "status": "http_container_and_postgres_poc_passed_browser_check_blocked",
+  "scope": "Standalone official Vercel CLI validation; not an UpOK provider adapter",
+  "public_url": "https://upok-vercel-20260917-go.vercel.app",
+  "tools": {
+    "vercel_cli": "59.20.0",
+    "local_node": "24.19.0",
+    "cloud_build_cli": "59.16.0"
+  },
+  "account_checks": {
+    "vercel_plan": "hobby",
+    "personal_owner_confirmed": true,
+    "neon_plan": "free",
+    "fluid_enabled": true,
+    "vcr_free_storage_quota_verified_gb": 10,
+    "paid_upgrade_performed": false
+  },
+  "billing_observation": {
+    "usage_cost_api": "unavailable for this Hobby account; not treated as zero",
+    "dashboard_quota_checked": true,
+    "dashboard_image_usage_lagged_actual_registry_inventory": true,
+    "full_month_free_cost_verified": false
+  },
+  "initial_failure": {
+    "deployment_id": "dpl_HQnBFCcLdKgXWwKjzgcgderQk6uE",
+    "provider_state": "READY",
+    "http_status": 404,
+    "builds": [],
+    "cause": "Explicit Other framework setting did not use the container preset",
+    "fix": "Sample vercel.json now explicitly sets framework to container"
+  },
+  "deployments": {
+    "v1": {
+      "id": "dpl_3zKZfDZqP4X5Tfeafa34QrzjTwvY",
+      "version": "vercel-v1",
+      "image_digest": "sha256:65a862c46db26e62a7df5a6a4095060c2e93e8a3e369d316ae1ddad855a3da14",
+      "go_build_observed": true,
+      "container_build_observed": true
+    },
+    "source_update": {
+      "id": "dpl_Bk73LhdcwpLfJmfN7mxuo7wR4zSz",
+      "version": "vercel-v1-source2",
+      "image_digest": "sha256:e115e6c93f4c601ef539a9ed2a530c95ef55dc63ddb6ed4a7ef13f66e1cda3dd",
+      "go_build_observed": true,
+      "container_build_observed": true
+    }
+  },
+  "v1_probe": {
+    "full_probe_passed": true,
+    "original_railway_record_preserved": true,
+    "new_record_retained_for_update": true,
+    "transport_retries": 0,
+    "duration_seconds": 15.292
+  },
+  "v2_probe": {
+    "full_probe_passed": true,
+    "source_version_visible": "vercel-v1-source2",
+    "vercel_record_preserved": true,
+    "original_railway_record_preserved": true,
+    "temporary_probe_record_removed": true,
+    "transport_retries": 0,
+    "duration_seconds": 18.977
+  },
+  "idle_probe": {
+    "idle_seconds_before_request": 360.003,
+    "request_at": "2026-09-17T08:10:38.097871+00:00",
+    "curl_exit": 0,
+    "retries": 0,
+    "runtime_scale_to_zero_independently_observed": false,
+    "http_code": "200",
+    "ssl_verify_result": "0",
+    "time_total": "1.780023",
+    "time_starttransfer": "1.779887",
+    "body": {
+      "status": "ready"
+    },
+    "application_version_verified": true,
+    "both_retained_records_preserved": true,
+    "vercel_temporary_record_removed": true,
+    "follow_up_transport_retries": 0
+  },
+  "registry": {
+    "image_count": 2,
+    "manifest_sizes_bytes": [
+      30932738,
+      30934542
+    ],
+    "note": "Registry-reported image sizes are not a final bill or a deduplicated billable storage measurement"
+  },
+  "runtime_logs": {
+    "records_sampled": 17,
+    "known_credentials_found": false
+  },
+  "boundaries": {
+    "original_fixture_hashes_unchanged": 20,
+    "railway_resources_changed": false,
+    "existing_custom_domain_changed": false,
+    "new_database_created": false,
+    "temporary_test_record_removed": true,
+    "billing_configuration_changed": false
+  },
+  "browser_verification": {
+    "chrome_public_navigation": "blocked",
+    "error": "net::ERR_BLOCKED_BY_CLIENT",
+    "browser_or_proxy_settings_changed": false
+  },
+  "remaining": [
+    "Diagnose the current Chrome client-side block before calling browser access validated.",
+    "No controlled loss-of-submit-response, quota exhaustion, or full-month bill verification on Vercel.",
+    "No Rust/Python/Node application deployment on Vercel; this run validates the Go container only.",
+    "No provider-reported scale-to-zero observation; the idle probe measures first access after six minutes without test requests.",
+    "UpOK publish still uses Railway; the Vercel adapter and independent-user reproduction remain future work."
+  ]
+}

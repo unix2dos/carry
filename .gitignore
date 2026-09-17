@@ -8,3 +8,5 @@ __pycache__/
 .venv/
 validation/artifacts/
 bin/
+.vercel/
+*.private.*
