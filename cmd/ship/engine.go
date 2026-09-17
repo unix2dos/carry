@@ -74,6 +74,21 @@ func (e *Engine) check(ctx context.Context, p Project) (ApplicationChecks, error
 	c := ApplicationChecks{At: time.Now().UTC(), Results: checkApplication(ctx, p.URL)}
 	return c, e.Store.saveChecks(p.Name, c)
 }
+
+func (e *Engine) logs(ctx context.Context, p Project) ([]string, error) {
+	known, err := e.Store.knownSecrets(p.Name)
+	if err != nil {
+		return nil, errors.New("local Keychain redaction context is unavailable; logs withheld")
+	}
+	lines, err := e.Providers.logs(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	for i := range lines {
+		lines[i] = redact(lines[i], known)
+	}
+	return lines, nil
+}
 func excluded(name string) bool {
 	for _, v := range []string{".git", "node_modules", ".venv", "__pycache__", "target", ".ship", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
 		if name == v {
@@ -204,6 +219,12 @@ func (e *Engine) executePublish(ctx context.Context, p Project, op *Operation, w
 		e.record(op, "blocked", err.Error())
 		return err
 	}
+	known, err := e.Store.knownSecrets(p.Name)
+	if err != nil {
+		e.record(op, "blocked", "本地钥匙串不可用，无法完成源码密钥检查")
+		return err
+	}
+	pre.Secrets = append(pre.Secrets, known...)
 	stage, digest, count, err := bundleSource(p.Source, e.Store.Root, pre.Secrets)
 	if err != nil {
 		e.record(op, "blocked", err.Error())

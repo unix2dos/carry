@@ -73,14 +73,18 @@ func (o Operation) terminal() bool {
 	return o.State == "deployed" || o.State == "failed" || o.State == "blocked"
 }
 
-type Store struct{ Root string }
+type Store struct {
+	Root        string
+	KeychainPut func(string, []byte) error
+	KeychainGet func(string) ([]byte, error)
+}
 
 func newStore(root string) (*Store, error) {
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
 	}
-	for _, sub := range []string{"", "projects", "operations", "observations", "checks", "locks"} {
+	for _, sub := range []string{"", "projects", "operations", "observations", "checks", "locks", "secrets"} {
 		p := filepath.Join(root, sub)
 		if err = os.MkdirAll(p, 0700); err != nil {
 			return nil, err

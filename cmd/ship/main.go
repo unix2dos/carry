@@ -33,6 +33,9 @@ Commands:
   publish NAME [--detach]  Upload a captured source directory to the bound service
   reconcile NAME [--wait]  Find the existing operation by its deployment marker
   history NAME
+  secret save NAME KEY --stdin  Store a value in local macOS Keychain; no cloud changes
+  secret list NAME       List saved secret metadata, never values
+  secret check NAME      Check local Keychain access; does not verify cloud values
   authorize NAME [--allow-publish=true|false] [--allow-trial=true|false]
   serve [--port 0] [--open]  Loopback-only local webpage with session authentication
 
@@ -146,6 +149,8 @@ func run(ctx context.Context, args []string) error {
 	providers := &Providers{Railway: resolveTool(settings.Railway, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway"), Neon: resolveTool(settings.Neon, "SHIP_NEON_BIN", "UPOK_NEON_BIN", "neon", ".bin/neon"), NeonConfig: settings.NeonConfig}
 	engine := &Engine{Store: store, Providers: providers}
 	switch args[0] {
+	case "secret":
+		return secretCommand(store, args[1:], os.Stdin)
 	case "register":
 		f := flag.NewFlagSet("register", flag.ContinueOnError)
 		var p Project
@@ -257,7 +262,7 @@ func run(ctx context.Context, args []string) error {
 		if len(args) != 2 {
 			return errors.New("unexpected logs arguments")
 		}
-		logs, err := providers.logs(ctx, p)
+		logs, err := engine.logs(ctx, p)
 		if err != nil {
 			return err
 		}
