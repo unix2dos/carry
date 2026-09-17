@@ -276,5 +276,5 @@ func newOperation(name string) (Operation, error) {
 	}
 	now := time.Now().UTC()
 	id := fmt.Sprintf("%d-%s", now.UnixNano(), hex.EncodeToString(random[:]))
-	return Operation{ID: id, Project: name, Created: now, State: "checking", Marker: "upok:" + id, Message: "正在预检，尚未提交发布"}, nil
+	return Operation{ID: id, Project: name, Created: now, State: "checking", Marker: "ship:" + id, Message: "正在预检，尚未提交发布"}, nil
 }

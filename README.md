@@ -1,8 +1,8 @@
-# UpOK
+# Ship
 
 Local deployment management for your apps, your cloud accounts, and your coding Agent.
 
-UpOK 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护应用。网页提供应用列表、日志和发布入口，应用与数据库运行在用户自己的云账号中。
+Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护应用。网页提供应用列表、日志和发布入口，应用与数据库运行在用户自己的云账号中。
 
 **当前为 Alpha。** 已验证的发布组合是 Railway Trial + Neon Free。正式 Railway Free 和付费账号的发布路径尚未验收，程序会停止这些账号的发布操作。软件采用 MIT 开源；云资源的费用取决于供应商套餐。
 
@@ -20,28 +20,28 @@ UpOK 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 目前安装入口仅验收 **macOS arm64**，需要 Go 1.24+、Node.js 20.19+ 和 npm。
 
 ```sh
-git clone https://github.com/unix2dos/upok.git
-cd upok
+git clone https://github.com/unix2dos/ship.git
+cd ship
 sh scripts/install.sh
-"$HOME/.local/share/upok/bin/upok" serve --open
+"$HOME/.local/share/ship/bin/ship" serve --open
 ```
 
-安装程序把 UpOK、固定版本的官方 CLI、使用说明和 Skill 放入独立目录，不需要 sudo。已有安装目录不会被覆盖；可以向脚本传入另一个尚不存在的绝对路径。
+安装程序把 Ship、固定版本的官方 CLI、使用说明和 Skill 放入独立目录，不需要 sudo。已有安装目录不会被覆盖；可以向脚本传入另一个尚不存在的绝对路径。
 
-第一次打开时应用列表为空。先通过官方 CLI 登录自己的账号，再关联已有资源，具体命令见 [Alpha 使用说明](docs/ALPHA.md)。网页只监听 `127.0.0.1`；启动地址含本地会话密钥，请勿分享完整地址。
+全新安装第一次打开时应用列表为空；从 UpOK 升级会沿用已有本地记录。先通过官方 CLI 登录自己的账号，再关联已有资源，具体命令见 [Alpha 使用说明](docs/ALPHA.md)。网页只监听 `127.0.0.1`；启动地址含本地会话密钥，请勿分享完整地址。
 
 ## 使用已有 Agent
 
-让能够在本机执行命令的编码 Agent 阅读 [UpOK Skill](skills/upok/SKILL.md)，选择项目后调用 CLI。无需 Agent 时也可直接操作：
+让能够在本机执行命令的编码 Agent 阅读 [Ship Skill](skills/ship/SKILL.md)，选择项目后调用 CLI。无需 Agent 时也可直接操作：
 
 ```sh
-cd "$HOME/.local/share/upok"
-./bin/upok list
-./bin/upok status demo
-./bin/upok check demo
-./bin/upok logs demo
-./bin/upok publish demo --detach
-./bin/upok reconcile demo --wait
+cd "$HOME/.local/share/ship"
+./bin/ship list
+./bin/ship status demo
+./bin/ship check demo
+./bin/ship logs demo
+./bin/ship publish demo --detach
+./bin/ship reconcile demo --wait
 ```
 
 `demo` 指用户已经登记并授权的本地项目。发布前程序会重新检查资源归属和费用条件。平台部署结果与应用访问结果分别记录：网络超时不等于部署失败。
@@ -61,10 +61,10 @@ cd "$HOME/.local/share/upok"
 在源码目录运行开发检查：
 
 ```sh
-go test -race ./cmd/upok
-go vet ./cmd/upok
-node --check cmd/upok/web/app.js
-python3 validation/install-smoke.py "$HOME/.local/share/upok"
+go test -race ./cmd/ship
+go vet ./cmd/ship
+node --check cmd/ship/web/app.js
+python3 validation/install-smoke.py "$HOME/.local/share/ship"
 ```
 
 完整容器检查另需本地 Docker 和 OpenSSL，见 [验证说明](validation/README.md)。

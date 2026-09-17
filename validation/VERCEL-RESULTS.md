@@ -1,6 +1,6 @@
 # Vercel Hobby：Go 容器与 Neon 验证
 
-2026-09-17。已在个人 Hobby 工作区完成 Go HTTP 容器的云端构建、PostgreSQL 读写、源码更新和数据保留检查。测试直接使用固定版本的官方 CLI，UpOK 的正式发布命令尚未接入 Vercel。
+2026-09-17。已在个人 Hobby 工作区完成 Go HTTP 容器的云端构建、PostgreSQL 读写、源码更新和数据保留检查。测试直接使用固定版本的官方 CLI，Ship 的正式发布命令尚未接入 Vercel。
 
 [公开健康接口](https://upok-vercel-20260917-go.vercel.app/healthz) · [脱敏结果](results/vercel-container-report.json) · [工具与复现准备](vercel-tools/README.md)
 
@@ -40,7 +40,7 @@
 
 这次证明了当前账号可以在Hobby条件下部署并运行样例，没有主动启用付费、创建新数据库或更换已有域名。它没有证明完整月份的零账单、全部账号资格、额度耗尽行为或商业用途可使用Hobby。
 
-## 对 UpOK 的含义
+## 对 Ship 的含义
 
 Vercel HTTP容器与外部PostgreSQL的组合已有实际证据，可继续评估为个人非商用应用的可选路径。原有20个本地样例/检查文件保持原始指纹；本轮只在隔离副本中添加Vercel配置和源码版本标识。
 

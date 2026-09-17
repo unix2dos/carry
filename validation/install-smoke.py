@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check an installed UpOK from an empty state directory without cloud requests."""
+"""Check an installed Ship from an empty state directory without cloud requests."""
 import json
 import os
 from pathlib import Path
@@ -20,9 +20,9 @@ def main():
         result = subprocess.run([str(installation / "tools/node_modules/.bin" / tool), "--version"],
                                 capture_output=True, text=True, check=True, timeout=20)
         assert result.stdout.strip() == version, f"Unexpected {tool} version"
-    with tempfile.TemporaryDirectory(prefix="upok-install-check-") as directory:
+    with tempfile.TemporaryDirectory(prefix="ship-install-check-") as directory:
         state = Path(directory) / "state"
-        command = [str(installation / "bin/upok"), "--state-dir", str(state)]
+        command = [str(installation / "bin/ship"), "--state-dir", str(state)]
         result = subprocess.run(command + ["list"], cwd=directory, capture_output=True,
                                 text=True, check=True, timeout=10)
         assert json.loads(result.stdout) == [], "Installation contains project state"
@@ -56,7 +56,7 @@ def main():
                         return error.code, error.read()
 
             code, page = get("")
-            assert code == 200 and b"UpOK" in page
+            assert code == 200 and b"Ship" in page
             assert get("api/projects")[0] == 401
             auth = {"Authorization": "Bearer " + key}
             code, data = get("api/projects", auth)
@@ -70,7 +70,7 @@ def main():
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
-    print("PASS installed CLIs, empty state, UpOK page, local authentication and origin boundary; no cloud requests")
+    print("PASS installed CLIs, empty state, Ship page, local authentication and origin boundary; no cloud requests")
 
 
 if __name__ == "__main__":

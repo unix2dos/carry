@@ -1,6 +1,6 @@
 # Vercel 容器验证工具
 
-固定官方 Vercel CLI `59.20.0`，仅用于隔离样例验证，尚未接入 UpOK 的正式发布命令。本次使用 macOS arm64 / Node.js `24.19.0`。Node.js 26 下登录曾返回 `fetch failed`，使用现有 Node.js 24 后授权成功；尚未证明失败根因仅为 Node 版本。
+固定官方 Vercel CLI `59.20.0`，仅用于隔离样例验证，尚未接入 Ship 的正式发布命令。本次使用 macOS arm64 / Node.js `24.19.0`。Node.js 26 下登录曾返回 `fetch failed`，使用现有 Node.js 24 后授权成功；尚未证明失败根因仅为 Node 版本。
 
 ## 准备与登录
 
@@ -8,13 +8,13 @@
 
 ```sh
 npm ci --prefix validation/vercel-tools --no-audit --no-fund
-export UPOK_VERCEL_AUTH_DIR="$HOME/.config/upok-validation/vercel"
-mkdir -p "$UPOK_VERCEL_AUTH_DIR"
-chmod 700 "$UPOK_VERCEL_AUTH_DIR"
+export SHIP_VERCEL_AUTH_DIR="$HOME/.config/ship-validation/vercel"
+mkdir -p "$SHIP_VERCEL_AUTH_DIR"
+chmod 700 "$SHIP_VERCEL_AUTH_DIR"
 env -u VERCEL_TOKEN -u VERCEL_ORG_ID -u VERCEL_PROJECT_ID \
   VERCEL_TELEMETRY_DISABLED=1 NO_UPDATE_NOTIFIER=1 \
   ./validation/vercel-tools/node_modules/.bin/vercel login \
-  --global-config "$UPOK_VERCEL_AUTH_DIR"
+  --global-config "$SHIP_VERCEL_AUTH_DIR"
 ```
 
 通过官方浏览器流程完成个人账号授权。凭证留在上述私有目录，后续命令显式提供 `--global-config` 和用户选定的 `--scope`。先读取用户、工作区及 Hobby 套餐，再检查网页 Usage 中的计算和镜像存储额度。Hobby 上 `vercel usage` 的计费数据可能不可用，这不能解释成用量为零。

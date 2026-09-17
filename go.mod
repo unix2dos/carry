@@ -1,3 +1,3 @@
-module github.com/unix2dos/upok
+module github.com/unix2dos/ship
 
 go 1.24

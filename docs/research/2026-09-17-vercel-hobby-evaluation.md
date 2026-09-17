@@ -1,4 +1,4 @@
-# Vercel Hobby 与 UpOK 的适配评估
+# Vercel Hobby 与 Ship 的适配评估
 
 核查日期：2026-09-17。范围：Vercel 官方文档、定价页和开放源码计划。通过 agent-reach 的 Exa、Jina Reader 读取，定价表与构建限制再以官方原页交叉核对。本次没有登录账号、部署应用、修改云资源或进行费用设置。
 
@@ -6,15 +6,15 @@
 
 ## 结论
 
-**Vercel Hobby 值得成为个人非商用应用的候选路径；它现在支持 HTTP 容器，不能再按“不支持 Docker、Rust 或 WebSocket”的旧印象排除。它仍然不是免费通用 VPS，也不适合作为所有 UpOK 用户的统一免费默认。**
+**Vercel Hobby 值得成为个人非商用应用的候选路径；它现在支持 HTTP 容器，不能再按“不支持 Docker、Rust 或 WebSocket”的旧印象排除。它仍然不是免费通用 VPS，也不适合作为所有 Ship 用户的统一免费默认。**
 
-前一句依据是当前运行时与 Container Images 文档；后一句是由 Hobby 的用途、请求生命周期和额度限制得出的产品判断，尚未在 UpOK 中实测。[官方运行时](https://vercel.com/docs/functions/runtimes)、[容器部署](https://vercel.com/docs/functions/container-images)、[Hobby 套餐](https://vercel.com/docs/plans/hobby)
+前一句依据是当前运行时与 Container Images 文档；后一句是由 Hobby 的用途、请求生命周期和额度限制得出的产品判断，尚未在 Ship 中实测。[官方运行时](https://vercel.com/docs/functions/runtimes)、[容器部署](https://vercel.com/docs/functions/container-images)、[Hobby 套餐](https://vercel.com/docs/plans/hobby)
 
 ## 1. 最大边界：Hobby 仅限个人非商用
 
 官方限制不只是“网站有没有收费按钮”。以参与项目生产的任何人的经济收益为目的，包含付费雇员或顾问编写项目，均可能构成 commercial usage；示例包括收款、宣传产品或服务销售、收费制作/更新/托管网站、主要用于联盟推广、刊登广告。单纯请求捐赠不算商业使用。商业用途要求 Pro 或 Enterprise；有歧义时官方要求联系支持确认。[Fair Use Guidelines](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage)
 
-**对 UpOK 的推论：UpOK 自身开源、免费，不会让它部署的用户应用自动取得 Hobby 非商用资格。** 商用 SaaS、接单网站、公司业务应用不能因为通过 UpOK 部署就默认选择 Hobby。
+**对 Ship 的推论：Ship 自身开源、免费，不会让它部署的用户应用自动取得 Hobby 非商用资格。** 商用 SaaS、接单网站、公司业务应用不能因为通过 Ship 部署就默认选择 Hobby。
 
 ## 2. 当前主要免费额度
 
@@ -49,7 +49,7 @@ Hobby 不能购买额外用量；当前 Hobby 说明是多数功能超额后需�
 | Node.js、Python | 官方运行时；Python 支持 ASGI/WSGI | 可部署 API/动态网站，仍需满足运行生命周期和依赖限制 |
 | Rust | 官方 Rust runtime，所有套餐 Beta，使用 `vercel_runtime` | 不应再描述成只有社区支持；原生函数入口涉及平台适配 |
 | Go | 官方 Go runtime，所有套餐 Beta；支持 `net/http`、chi、gin HTTP 服务，也保留 `/api` handler 路径 | `framework=go`，根 `go.mod`，识别 `main.go`、`cmd/api/main.go`、`cmd/server/main.go`，监听 `PORT` |
-| Docker/OCI HTTP 容器 | Container Images 所有套餐 Beta | 可云端构建容器，语言自由度更接近 UpOK 既有契约 |
+| Docker/OCI HTTP 容器 | Container Images 所有套餐 Beta | 可云端构建容器，语言自由度更接近 Ship 既有契约 |
 
 来源：[Runtimes](https://vercel.com/docs/functions/runtimes)、[Rust](https://vercel.com/docs/functions/runtimes/rust)、[Go](https://vercel.com/docs/functions/runtimes/go)、[Container Images](https://vercel.com/docs/functions/container-images)。
 
@@ -74,15 +74,15 @@ Fluid Hobby 当前最大单次执行 300 秒，2 GB 内存、1 vCPU；网络等�
 
 WebSocket **现在支持**所有套餐 Beta，需 Fluid。连接到最大函数时长会断开，客户端需要重连、恢复订阅，重连也不保证落到同一实例；持久房间/状态需要外部存储。不能描述为“永久常驻 WebSocket 服务器”。[WebSockets，更新于 2026-08-10](https://vercel.com/docs/functions/websockets)
 
-`waitUntil` 只延长请求生命周期内的后台工作，不等于无限运行的 daemon。Vercel 有独立 Workflows 方案支持持久化暂停与恢复；使用它意味着新增平台 API 与计费维度，本次不纳入 UpOK 通用容器能力。[Fluid background processing](https://vercel.com/docs/fluid-compute)、[Functions limits](https://vercel.com/docs/functions/limitations)
+`waitUntil` 只延长请求生命周期内的后台工作，不等于无限运行的 daemon。Vercel 有独立 Workflows 方案支持持久化暂停与恢复；使用它意味着新增平台 API 与计费维度，本次不纳入 Ship 通用容器能力。[Fluid background processing](https://vercel.com/docs/fluid-compute)、[Functions limits](https://vercel.com/docs/functions/limitations)
 
 ## 4. PostgreSQL 与开源赠额是不同的边界
 
-Vercel Storage 当前主要为 Blob、Global Config 和 Marketplace 数据库；PostgreSQL 来自 Neon、Supabase 等提供方，套餐和额度由提供方决定。它可以把数据库凭证注入项目环境变量，但这不代表 Hobby 自动赠送一套无限 PostgreSQL，也不代表数据库归 UpOK 管理。[Storage overview](https://vercel.com/docs/storage)
+Vercel Storage 当前主要为 Blob、Global Config 和 Marketplace 数据库；PostgreSQL 来自 Neon、Supabase 等提供方，套餐和额度由提供方决定。它可以把数据库凭证注入项目环境变量，但这不代表 Hobby 自动赠送一套无限 PostgreSQL，也不代表数据库归 Ship 管理。[Storage overview](https://vercel.com/docs/storage)
 
 **建议推论：** 首次 Vercel 验证继续使用独立的 Neon Free 账号/项目和标准 PostgreSQL 连接，先只改变计算平台，有利于比较迁移成本。是否走 Marketplace 自动开户另行评估，不在本轮同时更换数据库或创建资源。
 
-Vercel 的 OSS Program 要申请并经选择，当前公开权益为 3 年共 $3,600 平台 credits；需持续维护、有影响或潜力、Code of Conduct，credits 仅用于该开源项目。Marketplace 服务商额度不包含在内。它是给获选项目的支持，不能变成所有 UpOK 用户免费额度的基础。[Open Source Program](https://vercel.com/open-source-program)
+Vercel 的 OSS Program 要申请并经选择，当前公开权益为 3 年共 $3,600 平台 credits；需持续维护、有影响或潜力、Code of Conduct，credits 仅用于该开源项目。Marketplace 服务商额度不包含在内。它是给获选项目的支持，不能变成所有 Ship 用户免费额度的基础。[Open Source Program](https://vercel.com/open-source-program)
 
 ## 5. 下一次最小验证与待确认项
 
@@ -96,15 +96,15 @@ Vercel 的 OSS Program 要申请并经选择，当前公开权益为 3 年共 $3
 
 不以新增通用调度框架、自动跨云迁移、申请 OSS 补贴作为第一次验证的前置条件。
 
-## 6. UpOK 的平台选择与实施顺序（建议）
+## 6. Ship 的平台选择与实施顺序（建议）
 
 保持“用户自己的账号、本地管理、普通多语言 HTTP 应用、费用需用户主动选择”的产品边界。按应用的运行要求和用途筛选可用方案，再比较免费额度。一个固定供应商无法同时覆盖个人展示、商业应用、常驻 worker 和所有容器依赖。
 
-| 路径 | 最适合验证的场景 | 决定性边界 | 在 UpOK 中的建议角色 |
+| 路径 | 最适合验证的场景 | 决定性边界 | 在 Ship 中的建议角色 |
 | --- | --- | --- | --- |
 | Vercel Hobby + Neon | 个人非商用的 HTTP 应用，包含现有 Go/Rust 容器候选 | 用途限制、Container Images Beta、请求生命周期和多项月度额度 | 下一条优先做小型实测的计算路径 |
 | Cloudflare 静态资源 / Workers + Neon | 静态前端，以及适配 Workers 的轻量 API | 动态请求每天 10 万、每次 10ms CPU、128MB；普通容器需 Paid | 适用应用的免费路线，保持运行时适配边界 |
-| Railway + Neon | 已验证的普通容器部署、更新与故障核对 | 正式 Free 每月 $1；当前 UpOK 发布仅验收 Trial | 保留现有证据与适配，费用模式应明确展示 |
+| Railway + Neon | 已验证的普通容器部署、更新与故障核对 | 正式 Free 每月 $1；当前 Ship 发布仅验收 Trial | 保留现有证据与适配，费用模式应明确展示 |
 | Render Free + Neon | 接受明显冷启动、无持久本地文件的个人 HTTP 容器实验 | 每 workspace 750实例小时/月；15分钟空闲休眠，恢复约1分钟；费用状态和主动公网流量限制 | 容器备用候选，暂不同时实现 |
 
 Vercel依据见上文；Cloudflare来源：[Workers limits](https://developers.cloudflare.com/workers/platform/limits/)、[静态资源计费](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)、[Containers pricing](https://developers.cloudflare.com/containers/platform/pricing/)。Railway来源：[Plans](https://docs.railway.com/pricing/plans)、[Trial](https://docs.railway.com/pricing/free-trial)。Render来源：[Free](https://render.com/docs/free)、[Docker](https://render.com/docs/docker)。
