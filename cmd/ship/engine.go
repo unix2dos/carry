@@ -24,7 +24,19 @@ func validateReferences(p *Project) error {
 	if !slugPattern.MatchString(p.Name) {
 		return errors.New("name must use lowercase letters, digits and hyphens")
 	}
-	for _, id := range []string{p.Workspace, p.RailwayProject, p.Service, p.Environment, p.NeonOrg, p.NeonProject, p.NeonEndpoint} {
+	ids := []string{p.NeonOrg, p.NeonProject, p.NeonEndpoint}
+	switch p.Provider {
+	case "", "railway":
+		ids = append(ids, p.Workspace, p.RailwayProject, p.Service, p.Environment)
+	case "vercel":
+		if !strings.HasPrefix(p.VercelTeam, "team_") || !strings.HasPrefix(p.VercelProject, "prj_") {
+			return errors.New("Vercel requires explicit team and project IDs")
+		}
+		ids = append(ids, p.VercelTeam, p.VercelProject)
+	default:
+		return errors.New("unsupported compute provider")
+	}
+	for _, id := range ids {
 		if !idPattern.MatchString(id) {
 			return errors.New("all provider resource IDs must be explicit and valid")
 		}
@@ -49,9 +61,13 @@ func validateProject(p *Project) error {
 	if err != nil {
 		return errors.New("source directory does not exist")
 	}
-	info, err := os.Stat(filepath.Join(p.Source, "Dockerfile"))
+	dockerfile := "Dockerfile"
+	if p.Provider == "vercel" {
+		dockerfile = "Dockerfile.vercel"
+	}
+	info, err := os.Stat(filepath.Join(p.Source, dockerfile))
 	if err != nil || !info.Mode().IsRegular() {
-		return errors.New("internal alpha requires a source directory with a Dockerfile")
+		return fmt.Errorf("internal alpha requires a source directory with %s", dockerfile)
 	}
 	return nil
 }
@@ -90,7 +106,7 @@ func (e *Engine) logs(ctx context.Context, p Project) ([]string, error) {
 	return lines, nil
 }
 func excluded(name string) bool {
-	for _, v := range []string{".git", "node_modules", ".venv", "__pycache__", "target", ".ship", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
+	for _, v := range []string{".git", ".vercel", "node_modules", ".venv", "__pycache__", "target", ".ship", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
 		if name == v {
 			return true
 		}
@@ -237,13 +253,17 @@ func (e *Engine) executePublish(ctx context.Context, p Project, op *Operation, w
 	}
 	op.SourceHash = digest
 	op.SourceFiles = count
+	if p.Provider == "vercel" {
+		if err = prepareVercelSource(stage, p); err != nil {
+			e.record(op, "blocked", err.Error())
+			return err
+		}
+	}
 	// Durable intent precedes the only cloud mutation. Unknown outcomes are reconciled by this unique marker.
 	if err = e.record(op, "submitting", "正在提交源码；结果未确认前不会重复发布"); err != nil {
 		return err
 	}
-	args := append([]string{"up", stage, "--path-as-root"}, selectors(p)...)
-	args = append(args, "--detach", "--json", "--message", op.Marker)
-	_, submitErr := e.Providers.call(ctx, "railway", args...)
+	submitErr := e.Providers.submit(ctx, p, stage, op.Marker)
 	if err = e.record(op, "unknown", "提交结果待核对"); err != nil {
 		return err
 	}
@@ -283,7 +303,10 @@ func (e *Engine) reconcileOnce(ctx context.Context, p Project, op *Operation) er
 	op.DeploymentID = d.ID
 	op.ProviderState = d.Status
 	switch d.Status {
-	case "SUCCESS":
+	case "SUCCESS", "READY":
+		if p.Provider == "vercel" && !d.AliasAssigned {
+			return e.record(op, "deploying", "构建已完成，等待生产域名关联；不会重复提交")
+		}
 		c, err := e.check(ctx, p)
 		if err != nil {
 			return err
@@ -293,7 +316,7 @@ func (e *Engine) reconcileOnce(ctx context.Context, p Project, op *Operation) er
 		return e.record(op, "deployed", "平台已完成发布；应用访问检查单独显示")
 	case "SLEEPING":
 		return e.record(op, "deployed", "部署已完成；上次核对时服务处于休眠")
-	case "FAILED", "CRASHED", "REMOVED", "CANCELED", "CANCELLED", "SKIPPED":
+	case "FAILED", "ERROR", "CRASHED", "REMOVED", "CANCELED", "CANCELLED", "SKIPPED":
 		return e.record(op, "failed", "平台报告本次部署未运行；请查看日志后决定下一步")
 	default:
 		return e.record(op, "deploying", "已找到原部署，等待平台完成；不会创建替代资源")

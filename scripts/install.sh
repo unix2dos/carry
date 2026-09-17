@@ -29,6 +29,7 @@ cp "$repo/validation/cloud-tools/package.json" "$repo/validation/cloud-tools/pac
 npm ci --prefix "$stage/tools" --no-audit --no-fund
 "$stage/tools/node_modules/.bin/railway" --version
 "$stage/tools/node_modules/.bin/neon" --version
+VERCEL_TELEMETRY_DISABLED=1 NO_UPDATE_NOTIFIER=1 "$stage/tools/node_modules/.bin/vercel" --version
 cp "$repo/docs/ALPHA.md" "$stage/docs/"
 mkdir -p "$stage/docs/research"
 cp "$repo/docs/research/2026-09-16-free-plan-boundaries.md" "$stage/docs/research/"

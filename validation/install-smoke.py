@@ -16,7 +16,7 @@ def main():
     if len(sys.argv) != 2:
         raise SystemExit("Usage: python3 validation/install-smoke.py INSTALL_DIRECTORY")
     installation = Path(sys.argv[1]).resolve()
-    for tool, version in [("railway", "railway 5.57.2"), ("neon", "4.18.0")]:
+    for tool, version in [("railway", "railway 5.57.2"), ("neon", "4.18.0"), ("vercel", "59.20.0")]:
         result = subprocess.run([str(installation / "tools/node_modules/.bin" / tool), "--version"],
                                 capture_output=True, text=True, check=True, timeout=20)
         assert result.stdout.strip() == version, f"Unexpected {tool} version"

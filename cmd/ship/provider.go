@@ -17,15 +17,38 @@ import (
 )
 
 type Providers struct {
-	Railway    string
-	Neon       string
-	NeonConfig string
+	Railway      string
+	Neon         string
+	NeonConfig   string
+	Vercel       string
+	VercelConfig string
+	Store        *Store
 	// The command seam lets tests verify cloud arguments and unknown outcomes without real mutations.
-	Run func(context.Context, string, []string) ([]byte, error)
+	Run      func(context.Context, string, []string) ([]byte, error)
+	RunInput func(context.Context, string, []string, []byte) ([]byte, error)
 }
 type limitedBuffer struct {
 	bytes.Buffer
 	exceeded bool
+}
+
+type providerCommandError struct{ Tool, Code string }
+
+func (e *providerCommandError) Error() string {
+	return fmt.Sprintf("%s request failed (%s); cloud outcome is not confirmed, no automatic retry", e.Tool, e.Code)
+}
+
+func safeProviderError(tool string, data []byte) error {
+	var response struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	code := "cli_error_or_timeout"
+	if json.Unmarshal(data, &response) == nil && regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`).MatchString(response.Error.Code) {
+		code = response.Error.Code
+	}
+	return &providerCommandError{Tool: tool, Code: code}
 }
 
 func (b *limitedBuffer) Write(p []byte) (int, error) {
@@ -43,41 +66,53 @@ func cleanEnv() []string {
 	for _, v := range os.Environ() {
 		k, _, _ := strings.Cut(v, "=")
 		switch k {
-		case "RAILWAY_TOKEN", "RAILWAY_API_TOKEN", "NEON_API_KEY", "NEON_PROFILE":
+		case "RAILWAY_TOKEN", "RAILWAY_API_TOKEN", "NEON_API_KEY", "NEON_PROFILE", "VERCEL_TOKEN", "VERCEL_ORG_ID", "VERCEL_PROJECT_ID", "VERCEL_TELEMETRY_DISABLED", "NO_UPDATE_NOTIFIER":
 			continue
 		}
 		result = append(result, v)
 	}
-	return result
+	return append(result, "VERCEL_TELEMETRY_DISABLED=1", "NO_UPDATE_NOTIFIER=1")
 }
 func (v *Providers) call(ctx context.Context, tool string, args ...string) ([]byte, error) {
+	return v.callInput(ctx, tool, nil, args...)
+}
+func (v *Providers) callInput(ctx context.Context, tool string, input []byte, args ...string) ([]byte, error) {
 	if tool == "neon" {
 		args = append(args, "--config-dir", v.NeonConfig, "--no-analytics", "--output", "json")
 	}
-	if v.Run != nil {
+	if v.RunInput != nil {
+		return v.RunInput(ctx, tool, args, input)
+	}
+	if v.Run != nil && input == nil {
 		return v.Run(ctx, tool, args)
 	}
 	bin := v.Railway
 	if tool == "neon" {
 		bin = v.Neon
 	}
+	if tool == "vercel" {
+		bin = v.Vercel
+	}
 	if bin == "" {
 		return nil, fmt.Errorf("%s CLI is not configured", tool)
 	}
 	timeout := 40 * time.Second
-	if tool == "railway" && len(args) > 0 && args[0] == "up" {
+	if len(args) > 0 && ((tool == "railway" && args[0] == "up") || (tool == "vercel" && args[0] == "deploy")) {
 		timeout = 120 * time.Second
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = cleanEnv()
+	if input != nil {
+		cmd.Stdin = bytes.NewReader(input)
+	}
 	cmd.WaitDelay = 2 * time.Second
 	var stdout, stderr limitedBuffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("%s request failed or timed out; no automatic retry", tool)
+		return nil, safeProviderError(tool, stdout.Bytes())
 	}
 	if stdout.exceeded {
 		return nil, errors.New("provider output exceeded the size limit")
@@ -119,14 +154,18 @@ func (v *Providers) graph(ctx context.Context, q string, vars any, out any) erro
 }
 
 type Deployment struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-	Meta   struct {
+	ID            string `json:"id"`
+	Status        string `json:"status"`
+	AliasAssigned bool   `json:"alias_assigned,omitempty"`
+	Meta          struct {
 		Message string `json:"cliMessage"`
 	} `json:"meta"`
 }
 
 func (v *Providers) deployments(ctx context.Context, p Project) ([]Deployment, error) {
+	if p.Provider == "vercel" {
+		return v.vercelDeployments(ctx, p)
+	}
 	var d []Deployment
 	args := append([]string{"deployment", "list"}, selectors(p)...)
 	args = append(args, "--limit", "100", "--json")
@@ -134,6 +173,9 @@ func (v *Providers) deployments(ctx context.Context, p Project) ([]Deployment, e
 	return d, err
 }
 func (v *Providers) variables(ctx context.Context, p Project) (map[string]string, error) {
+	if p.Provider == "vercel" {
+		return v.vercelVariables(ctx, p)
+	}
 	var raw map[string]*string
 	args := append([]string{"variable", "list"}, selectors(p)...)
 	args = append(args, "--json")
@@ -155,7 +197,10 @@ type preflight struct {
 }
 
 func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
-	result := preflight{Observation: Observation{At: time.Now().UTC(), RailwayPlan: "Unknown", NeonPlan: "Unknown"}}
+	if p.Provider == "vercel" {
+		return v.inspectVercel(ctx, p)
+	}
+	result := preflight{Observation: Observation{At: time.Now().UTC(), Provider: "railway", RailwayPlan: "Unknown", NeonPlan: "Unknown"}}
 	var account struct {
 		Project struct {
 			ID          string `json:"id"`
@@ -210,6 +255,7 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 	} else {
 		result.Observation.RailwayPlan = "Paid or unverified"
 	}
+	result.Observation.ComputePlan = result.Observation.RailwayPlan
 	var live struct {
 		ID           string `json:"id"`
 		Status       string `json:"status"`
@@ -225,44 +271,12 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 	}
 	result.Observation.ServiceState = live.Status
 	result.Observation.DeploymentID = live.DeploymentID
-	var project struct {
-		Project struct {
-			ID    string `json:"id"`
-			OrgID string `json:"org_id"`
-		} `json:"project"`
-	}
-	if err := v.decode(ctx, "neon", &project, "api", "/projects/"+p.NeonProject, "--method", "GET"); err != nil {
+	neon, host, err := v.inspectNeon(ctx, p)
+	result.Observation.NeonPlan = neon.NeonPlan
+	result.Observation.DatabaseState = neon.DatabaseState
+	if err != nil {
 		return result, err
 	}
-	if project.Project.ID != p.NeonProject || project.Project.OrgID != p.NeonOrg {
-		return result, errors.New("Neon project ownership mismatch")
-	}
-	var orgs []struct {
-		ID   string `json:"id"`
-		Plan string `json:"plan"`
-	}
-	if err := v.decode(ctx, "neon", &orgs, "orgs", "list"); err != nil {
-		return result, err
-	}
-	for _, o := range orgs {
-		if o.ID == p.NeonOrg {
-			result.Observation.NeonPlan = o.Plan
-		}
-	}
-	var endpoint struct {
-		Endpoint struct {
-			ID    string `json:"id"`
-			Host  string `json:"host"`
-			State string `json:"current_state"`
-		} `json:"endpoint"`
-	}
-	if err := v.decode(ctx, "neon", &endpoint, "api", "/projects/"+p.NeonProject+"/endpoints/"+p.NeonEndpoint, "--method", "GET"); err != nil {
-		return result, err
-	}
-	if endpoint.Endpoint.ID != p.NeonEndpoint || endpoint.Endpoint.Host == "" {
-		return result, errors.New("Neon endpoint identity mismatch")
-	}
-	result.Observation.DatabaseState = endpoint.Endpoint.State
 	vars, err := v.variables(ctx, p)
 	if err != nil {
 		return result, err
@@ -271,7 +285,6 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 	if err != nil || (dsn.Scheme != "postgres" && dsn.Scheme != "postgresql") {
 		return result, errors.New("DATABASE_URL is missing or invalid; alpha supports the validated PostgreSQL contract")
 	}
-	host := endpoint.Endpoint.Host
 	parts := strings.SplitN(host, ".", 2)
 	pooler := ""
 	if len(parts) == 2 {
@@ -280,6 +293,7 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 	if dsn.Hostname() != host && dsn.Hostname() != pooler {
 		return result, errors.New("application DATABASE_URL does not match the registered Neon endpoint")
 	}
+	result.Observation.DatabaseBinding = "provider_value_matches_endpoint"
 	result.Secrets = secretValues(vars)
 	switch {
 	case *c.Subscribed || string(c.Payment) != "null":
@@ -329,6 +343,9 @@ func redact(s string, secrets []string) string {
 	return inlineSecret.ReplaceAllString(s, "[REDACTED]")
 }
 func (v *Providers) logs(ctx context.Context, p Project) ([]string, error) {
+	if p.Provider == "vercel" {
+		return v.vercelLogs(ctx, p)
+	}
 	vars, err := v.variables(ctx, p)
 	if err != nil {
 		return nil, errors.New("cannot obtain redaction context; logs withheld")
@@ -381,4 +398,47 @@ func checkApplication(ctx context.Context, base string) []Check {
 		results = append(results, c)
 	}
 	return results
+}
+
+func (v *Providers) inspectNeon(ctx context.Context, p Project) (Observation, string, error) {
+	observation := Observation{NeonPlan: "Unknown"}
+	var project struct {
+		Project struct {
+			ID    string `json:"id"`
+			OrgID string `json:"org_id"`
+		} `json:"project"`
+	}
+	if err := v.decode(ctx, "neon", &project, "api", "/projects/"+p.NeonProject, "--method", "GET"); err != nil {
+		return observation, "", err
+	}
+	if project.Project.ID != p.NeonProject || project.Project.OrgID != p.NeonOrg {
+		return observation, "", errors.New("Neon project ownership mismatch")
+	}
+	var orgs []struct {
+		ID   string `json:"id"`
+		Plan string `json:"plan"`
+	}
+	if err := v.decode(ctx, "neon", &orgs, "orgs", "list"); err != nil {
+		return observation, "", err
+	}
+	for _, o := range orgs {
+		if o.ID == p.NeonOrg {
+			observation.NeonPlan = o.Plan
+		}
+	}
+	var endpoint struct {
+		Endpoint struct {
+			ID    string `json:"id"`
+			Host  string `json:"host"`
+			State string `json:"current_state"`
+		} `json:"endpoint"`
+	}
+	if err := v.decode(ctx, "neon", &endpoint, "api", "/projects/"+p.NeonProject+"/endpoints/"+p.NeonEndpoint, "--method", "GET"); err != nil {
+		return observation, "", err
+	}
+	if endpoint.Endpoint.ID != p.NeonEndpoint || endpoint.Endpoint.Host == "" {
+		return observation, "", errors.New("Neon endpoint identity mismatch")
+	}
+	observation.DatabaseState = endpoint.Endpoint.State
+	return observation, endpoint.Endpoint.Host, nil
 }

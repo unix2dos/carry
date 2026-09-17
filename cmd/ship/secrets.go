@@ -18,8 +18,13 @@ var secretKeyPattern = regexp.MustCompile(`^[A-Z_][A-Z0-9_]{0,127}$`)
 var secretRefPattern = regexp.MustCompile(`^key-[a-f0-9]{32}$`)
 
 type SecretVersion struct {
-	Ref     string    `json:"ref"`
-	SavedAt time.Time `json:"saved_at"`
+	Ref             string    `json:"ref"`
+	SavedAt         time.Time `json:"saved_at"`
+	SyncState       string    `json:"sync_state,omitempty"`
+	RemoteID        string    `json:"remote_id,omitempty"`
+	RemoteUpdatedAt int64     `json:"remote_updated_at,omitempty"`
+	Marker          string    `json:"marker,omitempty"`
+	WriteErrorCode  string    `json:"write_error_code,omitempty"`
 }
 
 type SecretInfo struct {
@@ -99,10 +104,33 @@ func (s *Store) secretInfo(name string) ([]SecretInfo, error) {
 	}
 	result := []SecretInfo{}
 	for key, versions := range refs {
-		result = append(result, SecretInfo{key, len(versions), versions[len(versions)-1].SavedAt, "local_only_cloud_unverified"})
+		result = append(result, secretInfoFor(key, versions))
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Key < result[j].Key })
 	return result, nil
+}
+
+func secretInfoFor(key string, versions []SecretVersion) SecretInfo {
+	last := versions[len(versions)-1]
+	status := "local_only_cloud_unverified"
+	if last.SyncState == "synced" {
+		status = "last_write_confirmed"
+	}
+	if last.SyncState == "applying" || last.SyncState == "unknown" {
+		status = "write_outcome_unknown"
+	}
+	return SecretInfo{key, len(versions), last.SavedAt, status}
+}
+
+func (s *Store) secretValue(ref string) ([]byte, error) {
+	if !secretRefPattern.MatchString(ref) {
+		return nil, errors.New("invalid local secret reference")
+	}
+	get := s.KeychainGet
+	if get == nil {
+		get = keychainGet
+	}
+	return get(ref)
 }
 
 // Read every saved version for redaction; a saved value alone is never proof of the current cloud configuration.

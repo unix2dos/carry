@@ -1,0 +1,51 @@
+{
+  "recorded_at": "2026-09-17T10:38:26.242908+00:00",
+  "status": "local_implementation_tested_cloud_secret_write_unconfirmed",
+  "scope": "Vercel adapter remains on the local development branch; not a validated release",
+  "keychain": {
+    "native_cross_process_synthetic_test_passed": true,
+    "rebuilt_binary_readback_passed": true,
+    "synthetic_items_cleaned": true,
+    "database_url_saved_locally": true,
+    "ordinary_state_contains_only_references": true
+  },
+  "cloud": {
+    "existing_project_registration_passed": true,
+    "verified_plan": "hobby",
+    "database_secret_apply_attempts": 1,
+    "database_secret_apply_confirmed": false,
+    "validation_token_apply_attempts": 0,
+    "new_deployment_attempts": 0,
+    "diagnosis": {
+      "local_sync_state": "unknown",
+      "keychain_reference_present": true,
+      "same_remote_id": true,
+      "remote_version_before": 1789631361046,
+      "remote_version_now": 1789631361046,
+      "remote_version_changed": false,
+      "operation_marker_matches": false,
+      "still_secret": true,
+      "value_visible": false,
+      "/healthz": {
+        "http_tls": "200 0",
+        "status": "ok",
+        "version": "vercel-v1-source2"
+      },
+      "/readyz": {
+        "http_tls": "200 0",
+        "status": "ready",
+        "version": null
+      }
+    }
+  },
+  "next_step": "Discuss an isolated synthetic-variable write probe before any further cloud mutation. Keep the original DATABASE_URL write unresolved; do not retry it automatically.",
+  "candidate_changes_not_retried": [
+    "Align Secret PATCH with official Vercel CLI 59.20.0 v10 endpoint and omit the unchanged key field.",
+    "Capture only structured provider error codes, without response messages or credentials."
+  ],
+  "limitations": [
+    "The original CLI failure detail was not retained, so the root cause is not established.",
+    "Unchanged metadata means no confirmed write effect; it is not proof that replay is safe.",
+    "Vercel publication, logs, installation packaging and independent-user reproduction remain unaccepted."
+  ]
+}

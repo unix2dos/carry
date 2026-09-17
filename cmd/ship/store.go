@@ -19,6 +19,10 @@ var idPattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{7,99}$`)
 
 type Project struct {
 	Name           string `json:"name"`
+	Provider       string `json:"provider,omitempty"`
+	VercelTeam     string `json:"vercel_team,omitempty"`
+	VercelProject  string `json:"vercel_project,omitempty"`
+	AllowHobby     bool   `json:"allow_personal_noncommercial_hobby,omitempty"`
 	Source         string `json:"source"`
 	URL            string `json:"url"`
 	Workspace      string `json:"railway_workspace"`
@@ -44,14 +48,17 @@ type ApplicationChecks struct {
 	Results []Check   `json:"results"`
 }
 type Observation struct {
-	At            time.Time `json:"at"`
-	RailwayPlan   string    `json:"railway_plan"`
-	NeonPlan      string    `json:"neon_plan"`
-	ServiceState  string    `json:"service_state"`
-	DeploymentID  string    `json:"deployment_id"`
-	DatabaseState string    `json:"database_state"`
-	Eligible      bool      `json:"eligible"`
-	Reason        string    `json:"reason,omitempty"`
+	At              time.Time `json:"at"`
+	Provider        string    `json:"provider,omitempty"`
+	ComputePlan     string    `json:"compute_plan,omitempty"`
+	DatabaseBinding string    `json:"database_binding,omitempty"`
+	RailwayPlan     string    `json:"railway_plan"`
+	NeonPlan        string    `json:"neon_plan"`
+	ServiceState    string    `json:"service_state"`
+	DeploymentID    string    `json:"deployment_id"`
+	DatabaseState   string    `json:"database_state"`
+	Eligible        bool      `json:"eligible"`
+	Reason          string    `json:"reason,omitempty"`
 }
 type Operation struct {
 	ID            string     `json:"id"`

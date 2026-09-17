@@ -15,6 +15,8 @@ Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 
 核心操作直接调用用户授权的供应商接口，不依赖作者运营的在线后台。首次创建云资源、数据库迁移、无人值守维护和更多供应商尚未实现。
 
+当前开发分支增加了 macOS 钥匙串密钥存储和 Vercel 适配代码。钥匙串本机验证已通过；Vercel 的真实 Secret 写入仍待核实，尚未验收为可用发布路径。[接入状态](validation/results/vercel-adapter-report.json)
+
 ## 安装与启动
 
 目前安装入口仅验收 **macOS arm64**，需要 Go 1.24+、Node.js 20.19+ 和 npm。

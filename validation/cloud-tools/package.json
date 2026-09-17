@@ -5,6 +5,7 @@
   "description": "Pinned official CLIs for the personal cloud validation step",
   "dependencies": {
     "@railway/cli": "5.57.2",
-    "neon": "4.18.0"
+    "neon": "4.18.0",
+    "vercel": "59.20.0"
   }
 }

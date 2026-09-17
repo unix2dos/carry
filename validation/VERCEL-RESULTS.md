@@ -48,10 +48,14 @@ Vercel HTTP容器与外部PostgreSQL的组合已有实际证据，可继续评�
 
 正式适配仍需实现Vercel的资源关联、费用预检、部署元数据核对与状态展示。其他语言、独立用户流程和提交响应丢失后的恢复需要分别验收。
 
-## 适配前发现的 Secret 边界（待用户讨论）
+## Secret 边界与本地密钥管理
 
 同日只读调用已有测试项目的环境变量接口，`DATABASE_URL` 和 `VALIDATION_TOKEN` 均为 `type: sensitive`、`visibility: secret`、作用于 `production`，响应不包含值。`PORT`、`APP_VERSION` 和 `DATABASE_SSLMODE` 为可读 Config。未修改变量，也未将凭证改为可读配置。
 
 Vercel 官方说明 Secret 保存后只写不可读。因此当前 Railway 实现中依靠读回完整变量进行的数据库目标核对、已知密钥源码扫描和日志精确脱敏，不能原样移植。`/readyz` 成功只能证明应用自报数据库就绪，不能证明它连接的是登记的 Neon 数据库；供应商的构建日志遮蔽也不能代替 Ship 对所有运行日志的脱敏承诺。[Secret 官方说明](https://vercel.com/docs/environment-variables/sensitive-environment-variables)
 
-建议讨论的最小范围：保留 Secret；先实现已有计算项目的关联、费用与归属检查、部署、状态和中断核对。数据库分别展示资源归属与应用就绪证据，连接目标明确标为未核验；本版暂不通过 Ship 返回 Vercel 原始日志，用户在官方控制台查看。源码继续排除本地状态和敏感配置文件，但不得声称已与所有云端 Secret 值比对。是否接受这组能力边界，由用户确认后再实现。
+用户确认采用本地密钥保存方案。已实现 macOS Keychain 存储、引用记录、保留旧值供日志遮蔽，以及源码上传前的已知密钥检查。合成值的真实钥匙串跨进程存取、不同构建读回和测试项清理通过。普通项目 JSON 不保存密钥值。本地保存与云端应用是分开的操作，缓存不能代替云端当前配置的证明。
+
+Vercel 接入代码已加入本地分支，单元测试覆盖费用/归属限制、Secret 变更检测、未知写入与未知部署不重复提交。真实账号成功关联已有项目，但第一次 `DATABASE_URL` 同值 Secret 写入未能确认；其本地状态保持 `unknown`，尚未写入 `VALIDATION_TOKEN` 或发布新版本。
+
+只读复查显示远端 Secret ID 和版本未变、写入标记没有出现，Secret 仍不可读；现有应用 `/healthz` 与 `/readyz` 返回200。原始 CLI 错误细节未留存，原因未确定。代码已对齐固定版本官方 CLI 使用的 v10 更新端点，并省略不需要修改的 key 字段；这只是待验证修正，未据此重试。按用户要求暂停云端变更，待讨论是否用独立的合成测试变量验证写入行为。[接入进展](results/vercel-adapter-report.json)
