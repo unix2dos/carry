@@ -80,11 +80,7 @@ func (o Operation) terminal() bool {
 	return o.State == "deployed" || o.State == "failed" || o.State == "blocked"
 }
 
-type Store struct {
-	Root        string
-	KeychainPut func(string, []byte) error
-	KeychainGet func(string) ([]byte, error)
-}
+type Store struct{ Root string }
 
 func newStore(root string) (*Store, error) {
 	root, err := filepath.Abs(root)

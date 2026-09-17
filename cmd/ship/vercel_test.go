@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -50,9 +49,6 @@ func newVercelFixture(t *testing.T) *vercelFixture {
 	if err := os.WriteFile(filepath.Join(p.Source, "vercel.json"), []byte(`{"framework":"container"}`), 0600); err != nil {
 		t.Fatal(err)
 	}
-	items := map[string][]byte{}
-	e.Store.KeychainPut = func(ref string, value []byte) error { items[ref] = bytes.Clone(value); return nil }
-	e.Store.KeychainGet = func(ref string) ([]byte, error) { return bytes.Clone(items[ref]), nil }
 	if _, err := e.Store.saveSecret(p.Name, "DATABASE_URL", []byte("postgresql://user:cached-password@ep-demo1.region.neon.tech/db")); err != nil {
 		t.Fatal(err)
 	}

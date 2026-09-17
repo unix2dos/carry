@@ -16,7 +16,7 @@ import (
 const help = `ship — internal alpha, existing Railway or Vercel + Neon project bindings
 
 Global flags (before command):
-  --state-dir PATH       Private local records (default: config/ship; existing config/upok reused)
+  --state-dir PATH       Private local records (default: ~/.ship; existing legacy state reused)
   --railway-bin PATH     Official Railway CLI binary; no global installation is performed
   --neon-bin PATH        Official Neon CLI
   --neon-config PATH     Existing private Neon authentication directory
@@ -37,9 +37,9 @@ Commands:
   publish NAME [--detach]  Upload a captured source directory to the bound service
   reconcile NAME [--wait]  Find the existing operation by its deployment marker
   history NAME
-  secret save NAME KEY --stdin  Store a value in local macOS Keychain; no cloud changes
+  secret save NAME KEY --stdin  Save plaintext in an owner-only local file; no cloud changes
   secret list NAME       List saved secret metadata, never values
-  secret check NAME      Check local Keychain access; does not verify cloud values
+  secret check NAME      Check local secret-file access; does not verify cloud values
   secret apply NAME KEY  Apply a locally saved Secret to bound Vercel production
   secret reconcile NAME KEY  Reconcile an uncertain Secret write; never resend
   authorize NAME [--allow-publish=true|false] [--allow-trial=true|false]
@@ -47,8 +47,9 @@ Commands:
 
 Official CLI login remains a user-owned prerequisite. This alpha does not create,
 delete or adopt whole cloud projects, change billing, or migrate databases.
-All non-server command outputs are JSON. State files contain resource references,
-not cloud credentials. Use one explicit project authorization for regular updates.
+All non-server command outputs are JSON. Business secret values are stored separately
+in private local files and never printed. Official CLI login credentials stay with
+the official tools. Use one explicit project authorization for regular updates.
 `
 
 func resolveTool(explicit, envName, legacyEnvName, name, relative string) string {
@@ -78,14 +79,13 @@ func resolveTool(explicit, envName, legacyEnvName, name, relative string) string
 	return ""
 }
 
-func defaultStateDir(base string) string {
-	for _, name := range []string{"ship", "upok"} {
-		path := filepath.Join(base, name)
+func defaultStateDir(home, base string) string {
+	for _, path := range []string{filepath.Join(home, ".ship"), filepath.Join(base, "ship"), filepath.Join(base, "upok")} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			return path
 		}
 	}
-	return filepath.Join(base, "ship")
+	return filepath.Join(home, ".ship")
 }
 
 type Settings struct {
@@ -118,7 +118,7 @@ func run(ctx context.Context, args []string) error {
 		return err
 	}
 	flags := flag.NewFlagSet("ship", flag.ContinueOnError)
-	stateDir := flags.String("state-dir", defaultStateDir(base), "private local state")
+	stateDir := flags.String("state-dir", defaultStateDir(home, base), "private local state")
 	rwy := flags.String("railway-bin", "", "official Railway CLI")
 	neon := flags.String("neon-bin", "", "official Neon CLI")
 	neonConfig := flags.String("neon-config", "", "Neon authentication directory")

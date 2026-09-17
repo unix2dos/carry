@@ -38,13 +38,13 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 		return empty, err
 	}
 	defer unlock()
-	refs, err := e.Store.secretRefs(p.Name)
+	refs, err := e.Store.secretRecords(p.Name)
 	if err != nil {
 		return empty, err
 	}
 	versions := refs[key]
 	if len(versions) == 0 {
-		return empty, errors.New("save the Secret in local Keychain first")
+		return empty, errors.New("save the Secret in the local private file first")
 	}
 	last := &versions[len(versions)-1]
 	if _, plan, err := e.Providers.vercelAccount(ctx, p); err != nil {
@@ -85,7 +85,7 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 		if neon.NeonPlan != "free" {
 			return empty, errors.New("Secret writes require the validated Neon Free binding")
 		}
-		value, err := e.Store.secretValue(last.Ref)
+		value, err := e.Store.secretValue(p.Name, last.Ref)
 		if err != nil {
 			return empty, err
 		}

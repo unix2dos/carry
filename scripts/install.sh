@@ -12,7 +12,6 @@ esac
 for tool in go node npm; do
   command -v "$tool" >/dev/null 2>&1 || fail "Install $tool first; see docs/ALPHA.md."
 done
-[ "$(go env CGO_ENABLED)" = 1 ] || fail 'macOS Keychain support requires CGO_ENABLED=1 and Apple Command Line Tools.'
 node -e 'const [major,minor]=process.versions.node.split(".").map(Number); if (major<20 || (major===20 && minor<19)) process.exit(1)' || fail 'Node.js 20.19+ is required.'
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)

@@ -47,5 +47,11 @@
     "The original CLI failure detail was not retained, so the root cause is not established.",
     "Unchanged metadata means no confirmed write effect; it is not proof that replay is safe.",
     "Vercel publication, logs, installation packaging and independent-user reproduction remain unaccepted."
-  ]
+  ],
+  "local_storage_followup": {
+    "status": "replaced_with_private_local_files",
+    "report": "local-secret-files-report.json",
+    "pending_cloud_write_preserved": true,
+    "additional_cloud_requests": 0
+  }
 }

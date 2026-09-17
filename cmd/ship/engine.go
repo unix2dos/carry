@@ -94,7 +94,7 @@ func (e *Engine) check(ctx context.Context, p Project) (ApplicationChecks, error
 func (e *Engine) logs(ctx context.Context, p Project) ([]string, error) {
 	known, err := e.Store.knownSecrets(p.Name)
 	if err != nil {
-		return nil, errors.New("local Keychain redaction context is unavailable; logs withheld")
+		return nil, errors.New("local secret-file redaction context is unavailable; logs withheld")
 	}
 	lines, err := e.Providers.logs(ctx, p)
 	if err != nil {
@@ -237,7 +237,7 @@ func (e *Engine) executePublish(ctx context.Context, p Project, op *Operation, w
 	}
 	known, err := e.Store.knownSecrets(p.Name)
 	if err != nil {
-		e.record(op, "blocked", "本地钥匙串不可用，无法完成源码密钥检查")
+		e.record(op, "blocked", "本地密钥文件不可用，无法完成源码密钥检查")
 		return err
 	}
 	pre.Secrets = append(pre.Secrets, known...)

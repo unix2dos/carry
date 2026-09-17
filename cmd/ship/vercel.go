@@ -121,7 +121,7 @@ func (v *Providers) vercelVariables(ctx context.Context, p Project) (map[string]
 	if err != nil {
 		return nil, err
 	}
-	refs, err := v.Store.secretRefs(p.Name)
+	refs, err := v.Store.secretRecords(p.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -143,13 +143,13 @@ func (v *Providers) vercelVariables(ctx context.Context, p Project) (map[string]
 		if item.Type == "sensitive" || item.Visibility == "secret" {
 			versions := refs[item.Key]
 			if len(versions) == 0 {
-				return nil, errors.New("production Secret has no local value; save it to Keychain and explicitly apply it first")
+				return nil, errors.New("production Secret has no local value; save it locally and explicitly apply it first")
 			}
 			last := versions[len(versions)-1]
 			if last.SyncState != "synced" || last.RemoteID != item.ID || last.RemoteUpdatedAt != item.UpdatedAt || last.Marker != item.Comment || item.UpdatedAt <= 0 {
 				return nil, errors.New("cloud Secret metadata differs from the last confirmed write; synchronize it before publishing or reading logs")
 			}
-			value, err := v.Store.secretValue(last.Ref)
+			value, err := v.Store.secretValue(p.Name, last.Ref)
 			if err != nil {
 				return nil, err
 			}

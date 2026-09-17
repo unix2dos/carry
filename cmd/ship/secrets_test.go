@@ -3,13 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -19,8 +15,6 @@ func TestSavedSecretsProtectLogsAndSourceUploads(t *testing.T) {
 	if err := e.Store.register(p); err != nil {
 		t.Fatal(err)
 	}
-	e.Store.KeychainPut = func(string, []byte) error { return nil }
-	e.Store.KeychainGet = func(string) ([]byte, error) { return []byte("saved-secret-from-an-old-version"), nil }
 	if _, err := e.Store.saveSecret(p.Name, "CREDENTIAL", []byte("saved-secret-from-an-old-version")); err != nil {
 		t.Fatal(err)
 	}
@@ -51,18 +45,10 @@ func TestSavedSecretsProtectLogsAndSourceUploads(t *testing.T) {
 	}
 }
 
-func TestSecretStorageAndRotationKeepValuesOutOfState(t *testing.T) {
+func TestSecretStorageAndRotationKeepValuesOutOfOrdinaryRecords(t *testing.T) {
 	e, p := fixture(t)
 	if err := e.Store.register(p); err != nil {
 		t.Fatal(err)
-	}
-	items := map[string][]byte{}
-	e.Store.KeychainPut = func(ref string, value []byte) error {
-		if _, exists := items[ref]; exists {
-			t.Fatal("rotation reused a Keychain item")
-		}
-		items[ref] = bytes.Clone(value)
-		return nil
 	}
 	for _, value := range []string{"synthetic-old-secret", "synthetic-new-secret"} {
 		info, err := e.Store.saveSecret(p.Name, "APP_CREDENTIAL", []byte(value))
@@ -74,43 +60,119 @@ func TestSecretStorageAndRotationKeepValuesOutOfState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reopened.KeychainGet = func(ref string) ([]byte, error) {
-		return bytes.Clone(items[ref]), nil
-	}
 	values, err := reopened.knownSecrets(p.Name)
 	if err != nil || redact("synthetic-old-secret synthetic-new-secret", values) != "[REDACTED] [REDACTED]" {
 		t.Fatal("saved versions did not protect historical logs")
 	}
 	info, err := reopened.secretInfo(p.Name)
 	if err != nil || len(info) != 1 || info[0].Versions != 2 || info[0].Status != "local_only_cloud_unverified" {
-		t.Fatal("local import was incorrectly treated as cloud verification")
+		t.Fatal("local save was incorrectly treated as cloud verification")
 	}
+	secretPath := filepath.Join(e.Store.Root, "secrets", p.Name+".json")
 	err = filepath.Walk(e.Store.Root, func(path string, item os.FileInfo, err error) error {
 		if err != nil || item.IsDir() {
 			return err
 		}
 		data, err := os.ReadFile(path)
-		if bytes.Contains(data, []byte("synthetic-old-secret")) || bytes.Contains(data, []byte("synthetic-new-secret")) {
-			t.Fatal("plaintext secret entered a local record")
+		contains := bytes.Contains(data, []byte("synthetic-old-secret")) || bytes.Contains(data, []byte("synthetic-new-secret"))
+		if path == secretPath {
+			if !contains || item.Mode().Perm() != 0600 {
+				t.Fatal("private secret file is missing or has unsafe permissions")
+			}
+		} else if contains {
+			t.Fatal("plaintext secret entered an ordinary project record")
 		}
 		return err
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(e.Store.Root, "secrets", p.Name+".json")
-	before, _ := os.ReadFile(path)
-	e.Store.KeychainPut = func(string, []byte) error { return errors.New("keychain unavailable") }
+	before, err := os.ReadFile(secretPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Chmod(secretPath, 0644); err != nil {
+		t.Fatal(err)
+	}
 	if _, err = e.Store.saveSecret(p.Name, "APP_CREDENTIAL", []byte("third-secret")); err == nil {
-		t.Fatal("Keychain failure fell back to plaintext")
+		t.Fatal("insecure secret file was accepted")
 	}
-	after, _ := os.ReadFile(path)
-	if !bytes.Equal(before, after) {
-		t.Fatal("failed Keychain write changed references")
-	}
-	reopened.KeychainGet = func(string) ([]byte, error) { return nil, errors.New("keychain unavailable") }
 	if _, err = reopened.knownSecrets(p.Name); err == nil {
-		t.Fatal("missing redaction context was silently ignored")
+		t.Fatal("insecure secret file was read")
+	}
+	after, err := os.ReadFile(secretPath)
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatal("failed write changed existing secrets")
+	}
+	if err = os.Chmod(secretPath, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=^TestSecretFileChild$")
+	cmd.Env = append(os.Environ(), "SHIP_TEST_SECRET_DIR="+e.Store.Root)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("separate-process read failed: %v", err)
+	}
+	if bytes.Contains(output, []byte("synthetic-old-secret")) || bytes.Contains(output, []byte("synthetic-new-secret")) {
+		t.Fatal("CLI printed secret values")
+	}
+}
+
+func TestSecretFileChild(t *testing.T) {
+	root := os.Getenv("SHIP_TEST_SECRET_DIR")
+	if root == "" {
+		t.Skip("child of private-file persistence check")
+	}
+	store, err := newStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	values, err := store.knownSecrets("demo")
+	if err != nil || redact("synthetic-new-secret", values) != "[REDACTED]" {
+		t.Fatal("persisted secret could not be read")
+	}
+	for _, action := range []string{"list", "check"} {
+		if err = secretCommand(store, []string{action, "demo"}, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestLegacyMissingValueAndSecretSymlinkAreRejected(t *testing.T) {
+	e, p := fixture(t)
+	if err := e.Store.register(p); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.Store.saveSecret(p.Name, "TOKEN", []byte("synthetic-value")); err != nil {
+		t.Fatal(err)
+	}
+	records, err := e.Store.secretRecords(p.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	records["TOKEN"][0].Value = ""
+	records["TOKEN"][0].SyncState = "unknown"
+	path := filepath.Join(e.Store.Root, "secrets", p.Name+".json")
+	if err = atomicJSON(path, records); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = e.Store.secretValue(p.Name, records["TOKEN"][0].Ref); err == nil {
+		t.Fatal("missing legacy value was treated as available")
+	}
+	info, err := e.Store.secretInfo(p.Name)
+	if err != nil || info[0].Status != "write_outcome_unknown" {
+		t.Fatal("storage transition erased an unresolved cloud write")
+	}
+	outside := filepath.Join(t.TempDir(), "external.json")
+	if err = os.Rename(path, outside); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Symlink(outside, path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = e.Store.secretRecords(p.Name); err == nil {
+		t.Fatal("symlinked secret file was followed")
 	}
 }
 
@@ -119,7 +181,6 @@ func TestSecretInputBoundary(t *testing.T) {
 	if err := e.Store.register(p); err != nil {
 		t.Fatal(err)
 	}
-	e.Store.KeychainPut = func(string, []byte) error { t.Fatal("invalid input reached Keychain"); return nil }
 	for _, args := range [][]string{
 		{"save", p.Name, "APP_CREDENTIAL", "value-on-command-line"},
 		{"save", p.Name, "../bad", "--stdin"},
@@ -129,48 +190,9 @@ func TestSecretInputBoundary(t *testing.T) {
 			t.Fatal("invalid secret command accepted")
 		}
 	}
-	for _, value := range []string{"", strings.Repeat("x", maxSecretSize+1)} {
+	for _, value := range []string{"", string([]byte{0xff}), strings.Repeat("x", maxSecretSize+1)} {
 		if secretCommand(e.Store, []string{"save", p.Name, "APP_CREDENTIAL", "--stdin"}, strings.NewReader(value)) == nil {
 			t.Fatal("invalid secret size accepted")
 		}
-	}
-}
-
-func TestSystemKeychainRoundTrip(t *testing.T) {
-	if os.Getenv("SHIP_TEST_KEYCHAIN") != "1" || runtime.GOOS != "darwin" {
-		t.Skip("opt-in local macOS Keychain check with synthetic data only")
-	}
-	var random [16]byte
-	if _, err := rand.Read(random[:]); err != nil {
-		t.Fatal(err)
-	}
-	ref := "key-" + hex.EncodeToString(random[:])
-	if err := keychainPut(ref, []byte("ship-keychain-synthetic-value")); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := keychainDelete(ref); err != nil {
-			t.Error(err)
-		}
-	})
-	cmd := exec.Command(os.Args[0], "-test.run=^TestSystemKeychainChild$")
-	cmd.Env = append(os.Environ(), "SHIP_KEYCHAIN_TEST_REF="+ref)
-	if result, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("separate-process Keychain access failed: %v; %s", err, result)
-	}
-}
-
-func TestSystemKeychainChild(t *testing.T) {
-	ref := os.Getenv("SHIP_KEYCHAIN_TEST_REF")
-	if !secretRefPattern.MatchString(ref) || os.Getenv("SHIP_TEST_KEYCHAIN") != "1" {
-		t.Skip("child of the opt-in native Keychain check")
-	}
-	value, err := keychainGet(ref)
-	defer clear(value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(value) != "ship-keychain-synthetic-value" {
-		t.Fatal("Keychain did not preserve the synthetic value")
 	}
 }

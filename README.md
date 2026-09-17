@@ -15,7 +15,7 @@ Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 
 核心操作直接调用用户授权的供应商接口，不依赖作者运营的在线后台。首次创建云资源、数据库迁移、无人值守维护和更多供应商尚未实现。
 
-当前开发分支增加了 macOS 钥匙串密钥存储和 Vercel 适配代码。钥匙串本机验证已通过；Vercel 的真实 Secret 写入仍待核实，尚未验收为可用发布路径。[接入状态](validation/results/vercel-adapter-report.json)
+当前开发分支使用 `~/.ship` 保存本地记录，业务密钥以受限权限的明文文件单独存放；已移除 macOS 钥匙串依赖。Vercel 适配代码已加入，Vercel 的真实 Secret 写入仍待核实，尚未验收为可用发布路径。[接入状态](validation/results/vercel-adapter-report.json)
 
 ## 安装与启动
 
@@ -53,6 +53,7 @@ cd "$HOME/.local/share/ship"
 截至 2026-09-17：
 
 - Go 检查、race 检测、`go vet`、前端语法与安装检查通过，包括改名后的旧状态与发布记录兼容检查。
+- 本地文件密钥存储、私有权限、跨进程读取、旧数据迁移与安装后的页面检查通过。[存储验收](validation/results/local-secret-files-report.json)
 - 安装后的工具从空白本地状态关联资源、完成真实发布，再由新进程核对；原 PostgreSQL 数据保留。[安装验收记录](validation/results/upok-install-report.json)
 - Go、Python、Node、Rust 的 Linux/amd64 容器样例通过 29 组本地检查。[本地结果](validation/RESULTS.md)
 - Go 样例完成真实云端部署、更新、自然休眠唤醒与一次配置故障恢复。[云端结果](validation/CLOUD-RESULTS.md)
