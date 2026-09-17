@@ -11,13 +11,41 @@ import (
 )
 
 func TestProviderErrorDoesNotEchoResponseDetails(t *testing.T) {
-	err := safeProviderError("vercel", []byte(`{"error":{"code":"bad_request","message":"rejected plaintext-private-value"}}`))
+	err := safeProviderError("vercel", []byte(`{"error":{"code":"bad_request","message":"rejected plaintext-private-value"}}`), nil)
 	if !strings.Contains(err.Error(), "bad_request") || strings.Contains(err.Error(), "plaintext-private-value") {
 		t.Fatal("provider response details escaped redaction boundary")
 	}
-	err = safeProviderError("vercel", []byte(`{"error":{"code":"unsafe value with spaces","message":"plaintext-private-value"}}`))
+	err = safeProviderError("vercel", []byte(`{"error":{"code":"unsafe value with spaces","message":"plaintext-private-value"}}`), nil)
 	if !strings.Contains(err.Error(), "cli_error_or_timeout") || strings.Contains(err.Error(), "unsafe value") {
 		t.Fatal("unstructured provider detail was exposed")
+	}
+}
+
+func TestVercelKnownValidationRejectionIsNotUnknown(t *testing.T) {
+	// Exact response observed from the pinned CLI in the isolated cloud probe.
+	err := safeProviderError("vercel", nil, []byte("Error: You cannot change the key of a Sensitive Environment Variable. (400)\n"))
+	var classified *providerCommandError
+	if !errors.As(err, &classified) || !classified.Rejected || classified.Code != "sensitive_key_immutable" {
+		t.Fatal("known provider validation rejection was discarded")
+	}
+	f := newVercelFixture(t)
+	run := f.e.Providers.RunInput
+	f.e.Providers.RunInput = func(ctx context.Context, tool string, args []string, input []byte) ([]byte, error) {
+		if input != nil {
+			f.writes++
+			return nil, err
+		}
+		return run(ctx, tool, args, input)
+	}
+	if _, err = f.e.syncVercelSecret(context.Background(), f.p, "DATABASE_URL", true); err == nil {
+		t.Fatal("rejected write reported success")
+	}
+	records, readErr := f.e.Store.secretRecords(f.p.Name)
+	if readErr != nil || records["DATABASE_URL"][0].SyncState != "rejected" {
+		t.Fatal("definite rejection was not preserved")
+	}
+	if _, err = f.e.syncVercelSecret(context.Background(), f.p, "DATABASE_URL", true); err == nil || f.writes != 1 {
+		t.Fatal("rejected attempt was automatically reused")
 	}
 }
 
@@ -126,7 +154,7 @@ func TestVercelSecretUnknownWriteAndDrift(t *testing.T) {
 	f := newVercelFixture(t)
 	ctx := context.Background()
 	pre, err := f.e.Providers.inspect(ctx, f.p)
-	if err != nil || pre.Observation.Eligible {
+	if err != nil || !pre.Observation.Eligible || pre.Observation.DatabaseBinding != "provider_secret_retained_not_readable" {
 		t.Fatal("local cache was treated as cloud truth")
 	}
 	f.loseReply = true
@@ -135,6 +163,10 @@ func TestVercelSecretUnknownWriteAndDrift(t *testing.T) {
 	}
 	if _, err = f.e.syncVercelSecret(ctx, f.p, "DATABASE_URL", true); err == nil || f.writes != 1 {
 		t.Fatal("uncertain Secret write was replayed")
+	}
+	pre, err = f.e.Providers.inspect(ctx, f.p)
+	if err != nil || pre.Observation.Eligible {
+		t.Fatal("unresolved Secret write did not block deployment")
 	}
 	f.env = *f.hidden
 	if _, err = f.e.syncVercelSecret(ctx, f.p, "DATABASE_URL", false); err != nil || f.writes != 1 {
@@ -150,11 +182,34 @@ func TestVercelSecretUnknownWriteAndDrift(t *testing.T) {
 	}
 	f.env.UpdatedAt++
 	pre, err = f.e.Providers.inspect(ctx, f.p)
-	if err != nil || pre.Observation.Eligible {
+	if err != nil || !pre.Observation.Eligible || pre.Observation.DatabaseBinding != "provider_secret_retained_not_readable" {
 		t.Fatal("externally changed Secret was trusted")
 	}
-	if _, err = f.e.logs(ctx, f.p); err == nil {
-		t.Fatal("logs were returned with stale redaction context")
+	lines, err = f.e.logs(ctx, f.p)
+	if err != nil || len(lines) != 1 || lines[0] != "[REDACTED]" {
+		t.Fatal("known historical secrets were not redacted")
+	}
+}
+
+func TestVercelDeployRetainsOpaqueProviderSecrets(t *testing.T) {
+	f := newVercelFixture(t)
+	if err := os.Remove(filepath.Join(f.e.Store.Root, "secrets", f.p.Name+".json")); err != nil {
+		t.Fatal(err)
+	}
+	op, unlock, err := f.e.begin(f.p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unlock()
+	if err = f.e.executePublish(context.Background(), f.p, op, false); err != nil {
+		t.Fatalf("existing configuration could not be retained: %v", err)
+	}
+	if f.uploads != 1 || f.writes != 0 || op.State != "deploying" {
+		t.Fatal("source deployment depended on replacing provider Secrets")
+	}
+	observation := f.e.Store.observation(f.p.Name)
+	if observation == nil || observation.DatabaseBinding != "provider_secret_retained_not_readable" {
+		t.Fatal("opaque database identity was reported as verified")
 	}
 }
 

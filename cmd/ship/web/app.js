@@ -36,7 +36,7 @@ async function load(){
   card.querySelector('.recovery').hidden=!pending||view.running;
   card.querySelector('.observed').textContent=time(newerOperation?op.updated_at:o?.at);
   card.querySelector('.database').textContent=o?.database_state||'尚未读取';
-  card.querySelector('.binding').textContent=o?.database_binding==='last_write_and_metadata_match_not_runtime_identity'?'上次写入与平台记录一致；运行连接仍需检查':o?.database_binding==='provider_value_matches_endpoint'?'配置地址与登记数据库一致':'待核对';
+  card.querySelector('.binding').textContent=o?.database_binding==='last_write_and_metadata_match_not_runtime_identity'?'上次写入与平台记录一致；运行连接仍需检查':o?.database_binding==='provider_value_matches_endpoint'?'配置地址与登记数据库一致':o?.database_binding==='provider_secret_retained_not_readable'?'沿用平台已有 Secret；连接目标未核验':'待核对';
   const checks=view.checks;
   card.querySelector('.checked').textContent=checks?(checks.results.every(c=>c.ok)?'通过':'未通过或待确认')+' · '+time(checks.at):'尚未检查（刷新资源状态不会唤醒应用）';
   card.querySelector('.authorization').textContent=p.allow_publish?'允许向此服务发布当前源码'+(p.provider==='vercel'?(p.allow_personal_noncommercial_hobby?'，已确认 Hobby 个人非商业用途':''):(p.allow_trial?'，已接受 Trial 试用条件':'')):'仅查看';

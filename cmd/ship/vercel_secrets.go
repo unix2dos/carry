@@ -66,8 +66,8 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 				return empty, errors.New("a previous Secret write is unresolved; use secret reconcile before another write")
 			}
 		}
-		if last.SyncState == "synced" {
-			return empty, errors.New("this local version was already applied; save a new version for an intentional update")
+		if last.SyncState == "synced" || last.SyncState == "rejected" || last.SyncState == "diagnosed_not_applied" {
+			return empty, errors.New("this local version already has a completed write attempt; save a new version for an intentional update")
 		}
 		ops, err := e.Store.operations(p.Name)
 		if err != nil {
@@ -125,6 +125,14 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 		var commandErr *providerCommandError
 		if errors.As(writeErr, &commandErr) {
 			last.WriteErrorCode = commandErr.Code
+			if commandErr.Rejected {
+				last.SyncState = "rejected"
+				refs[key] = versions
+				if err = atomicJSON(filepath.Join(e.Store.Root, "secrets", p.Name+".json"), refs); err != nil {
+					return empty, err
+				}
+				return empty, writeErr
+			}
 		}
 		last.SyncState = "unknown"
 		refs[key] = versions

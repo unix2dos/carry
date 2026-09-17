@@ -19,14 +19,17 @@ var secretKeyPattern = regexp.MustCompile(`^[A-Z_][A-Z0-9_]{0,127}$`)
 var secretRefPattern = regexp.MustCompile(`^key-[a-f0-9]{32}$`)
 
 type SecretVersion struct {
-	Ref             string    `json:"ref"`
-	Value           string    `json:"value,omitempty"`
-	SavedAt         time.Time `json:"saved_at"`
-	SyncState       string    `json:"sync_state,omitempty"`
-	RemoteID        string    `json:"remote_id,omitempty"`
-	RemoteUpdatedAt int64     `json:"remote_updated_at,omitempty"`
-	Marker          string    `json:"marker,omitempty"`
-	WriteErrorCode  string    `json:"write_error_code,omitempty"`
+	Ref                string     `json:"ref"`
+	Value              string     `json:"value,omitempty"`
+	SavedAt            time.Time  `json:"saved_at"`
+	SyncState          string     `json:"sync_state,omitempty"`
+	RemoteID           string     `json:"remote_id,omitempty"`
+	RemoteUpdatedAt    int64      `json:"remote_updated_at,omitempty"`
+	Marker             string     `json:"marker,omitempty"`
+	WriteErrorCode     string     `json:"write_error_code,omitempty"`
+	ResolvedAt         *time.Time `json:"resolved_at,omitempty"`
+	Resolution         string     `json:"resolution,omitempty"`
+	ResolutionEvidence string     `json:"resolution_evidence,omitempty"`
 }
 
 type SecretInfo struct {
@@ -117,6 +120,12 @@ func secretInfoFor(key string, versions []SecretVersion) SecretInfo {
 	}
 	if last.SyncState == "applying" || last.SyncState == "unknown" {
 		status = "write_outcome_unknown"
+	}
+	if last.SyncState == "diagnosed_not_applied" {
+		status = "write_diagnosed_not_applied"
+	}
+	if last.SyncState == "rejected" {
+		status = "write_rejected"
 	}
 	return SecretInfo{key, len(versions), last.SavedAt, status}
 }

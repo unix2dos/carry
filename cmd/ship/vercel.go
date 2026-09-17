@@ -141,13 +141,16 @@ func (v *Providers) vercelVariables(ctx context.Context, p Project) (map[string]
 			return nil, errors.New("ambiguous production environment variables")
 		}
 		if item.Type == "sensitive" || item.Visibility == "secret" {
+			// Presence is observable even when the provider keeps the value write-only.
+			// Source deployment retains that configuration; a local cache is optional.
+			values[item.Key] = ""
 			versions := refs[item.Key]
 			if len(versions) == 0 {
-				return nil, errors.New("production Secret has no local value; save it locally and explicitly apply it first")
+				continue
 			}
 			last := versions[len(versions)-1]
 			if last.SyncState != "synced" || last.RemoteID != item.ID || last.RemoteUpdatedAt != item.UpdatedAt || last.Marker != item.Comment || item.UpdatedAt <= 0 {
-				return nil, errors.New("cloud Secret metadata differs from the last confirmed write; synchronize it before publishing or reading logs")
+				continue
 			}
 			value, err := v.Store.secretValue(p.Name, last.Ref)
 			if err != nil {
@@ -219,11 +222,19 @@ func (v *Providers) inspectVercel(ctx context.Context, p Project) (preflight, er
 		result.Observation.Reason = err.Error()
 		return result, nil
 	}
-	if !databaseEndpointMatches(vars["DATABASE_URL"], host) {
+	databaseURL, configured := vars["DATABASE_URL"]
+	if !configured {
+		result.Observation.Reason = "Vercel production 未配置 DATABASE_URL"
+		return result, nil
+	}
+	if databaseURL != "" && !databaseEndpointMatches(databaseURL, host) {
 		result.Observation.Reason = "本地保存的 DATABASE_URL 与登记的 Neon 连接端点不匹配"
 		return result, nil
 	}
-	result.Observation.DatabaseBinding = "last_write_and_metadata_match_not_runtime_identity"
+	result.Observation.DatabaseBinding = "provider_secret_retained_not_readable"
+	if databaseURL != "" {
+		result.Observation.DatabaseBinding = "last_write_and_metadata_match_not_runtime_identity"
+	}
 	result.Secrets = secretValues(vars)
 	result.Observation.Eligible = true
 	return result, nil
@@ -296,7 +307,7 @@ func (v *Providers) vercelLogs(ctx context.Context, p Project) ([]string, error)
 	}
 	vars, err := v.vercelVariables(ctx, p)
 	if err != nil {
-		return nil, errors.New("Vercel Secret redaction context is missing or stale; logs withheld")
+		return nil, errors.New("Vercel Secret metadata could not be checked or a write is unresolved; logs withheld")
 	}
 	data, err := v.vercelCall(ctx, p, nil, "logs", "--project", p.VercelProject, "--environment", "production", "--limit", "40", "--json", "--no-follow")
 	if err != nil {

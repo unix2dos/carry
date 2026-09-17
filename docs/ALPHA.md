@@ -116,6 +116,16 @@ CLI 二进制位置可用 `--railway-bin`、`--neon-bin` 指定；首次登记�
 
 源码副本限制为 20 MiB / 2000 个常规文件，排除常见凭证文件、依赖缓存和本地数据库文件，拒绝符号链接及已知云凭证的明文内容。记录的摘要对应捕获的源码副本；供应商还会应用上传忽略规则，它不是云端镜像摘要。此检查不能发现所有种类的硬编码秘密，发布前仍须检查项目源码。
 
+## Vercel 接入的当前边界
+
+开发分支支持绑定已有 Vercel Hobby 项目与 Neon Free。使用已登录的官方 CLI，通过 `--vercel-config` 指定认证目录，登记时指定 `--provider vercel --vercel-team TEAM_ID --vercel-project PROJECT_ID --allow-hobby`，并提供已有应用 URL 与 Neon 标识。`--allow-hobby` 表示用户接受个人非商业用途限制，不代表所有应用都适用。源码目前要求 `Dockerfile.vercel` 和仅含 `{"framework":"container"}` 的 `vercel.json`。
+
+普通源码发布沿用平台上已有的 Secret，不强制读回、缓存或重写密钥。数据库地址不可读或本地副本已过期时，明确显示“连接目标未核验”；账号归属、套餐条件与变量存在性仍会检查。只有用户明确请求配置变更时才调用 `secret apply`。真正未知的写入仍会阻止后续发布，不能通过删除缓存绕过。
+
+日志按可用的本地已知值和通用格式遮蔽；平台隐藏的、没有本地副本的值可能无法精确匹配，分享前需检查。`/readyz` 成功只说明应用报告数据库就绪，不独立证明连接的是登记的实例。
+
+隔离实验已证实：Secret 更新请求包含 `key` 字段时，Vercel 即使收到相同名字也返回400；移除该字段后更新成功。创建请求仍必须包含 `key`。工具已保留回归检查，并将这类明确拒绝与网络失败等未知结果区分。历史数据库写入没有原始错误回执，当前仍等待用户确认后进行带证据的处置，不会自动重发。[诊断结果](../validation/results/vercel-secret-update-diagnosis.json)
+
 ## 费用与范围
 
 当前唯一已实测的写入路径是明确接受 Trial 的 Railway 账号加 Neon Free；发布还要求无付费订阅或默认支付方式、Trial 额度大于零。其他计费状态保留只读能力，停止发布。正式 Free 不能用 Trial 结果代替：[费用边界](research/2026-09-16-free-plan-boundaries.md)。

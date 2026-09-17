@@ -32,13 +32,22 @@ type limitedBuffer struct {
 	exceeded bool
 }
 
-type providerCommandError struct{ Tool, Code string }
+type providerCommandError struct {
+	Tool, Code string
+	Rejected   bool
+}
 
 func (e *providerCommandError) Error() string {
+	if e.Rejected {
+		return fmt.Sprintf("%s request was rejected (%s); no automatic retry", e.Tool, e.Code)
+	}
 	return fmt.Sprintf("%s request failed (%s); cloud outcome is not confirmed, no automatic retry", e.Tool, e.Code)
 }
 
-func safeProviderError(tool string, data []byte) error {
+func safeProviderError(tool string, data, stderr []byte) error {
+	if tool == "vercel" && strings.Contains(string(stderr), "Error: You cannot change the key of a Sensitive Environment Variable. (400)") {
+		return &providerCommandError{Tool: tool, Code: "sensitive_key_immutable", Rejected: true}
+	}
 	var response struct {
 		Error struct {
 			Code string `json:"code"`
@@ -112,7 +121,7 @@ func (v *Providers) callInput(ctx context.Context, tool string, input []byte, ar
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return nil, safeProviderError(tool, stdout.Bytes())
+		return nil, safeProviderError(tool, stdout.Bytes(), stderr.Bytes())
 	}
 	if stdout.exceeded {
 		return nil, errors.New("provider output exceeded the size limit")
