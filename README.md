@@ -21,34 +21,33 @@ Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 
 ## 安装与启动
 
-目前安装入口仅验收 **macOS arm64**，需要 Go 1.24+、Node.js 和 npm；Vercel 路径使用 Node.js 24 验收。
+目前支持 **macOS Apple Silicon**，需要 Node.js 24+ 和 npm。CLI 使用预编译包，无需 Go 或 Git：
 
 ```sh
-git clone https://github.com/unix2dos/ship.git
-cd ship
-sh scripts/install.sh
-"$HOME/.local/share/ship/bin/ship" serve --open
+curl -fsSL https://github.com/unix2dos/ship/releases/download/v0.1.0-alpha.1/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+ship --version
 ```
 
-安装程序把 Ship、固定版本的官方 CLI、使用说明和 Skill 放入独立目录，不需要 sudo。已有安装目录不会被覆盖；可以向脚本传入另一个尚不存在的绝对路径。
+安装器自动配置 zsh / bash 的 PATH，并安装 Codex、Claude Code 的 Ship Skill。`export` 只为当前终端立即生效，新终端可直接运行 `ship`。安装不需要 sudo，不覆盖其他来源的同名命令或 Skill。
 
-全新安装第一次打开时应用列表为空；从 UpOK 升级会沿用已有本地记录。先通过官方 CLI 登录自己的账号，再关联已有资源，具体命令见 [Alpha 使用说明](docs/ALPHA.md)。网页只监听 `127.0.0.1`；启动地址含本地会话密钥，请勿分享完整地址。
+接着在 Codex 输入 `$ship` 或在 Claude Code 输入 `/ship`，让 Agent 引导你登录自己的云账号、关联现有应用。Skill 从下一轮对话可用，未出现时重启 Agent。完整步骤见 **[开始使用 Ship](docs/FIRST-TRY.md)**。
 
-## 使用已有 Agent
-
-让能够在本机执行命令的编码 Agent 阅读 [Ship Skill](skills/ship/SKILL.md)，选择项目后调用 CLI。无需 Agent 时也可直接操作：
+## 日常使用
 
 ```sh
-cd "$HOME/.local/share/ship"
-./bin/ship list
-./bin/ship status demo
-./bin/ship check demo
-./bin/ship logs demo
-./bin/ship publish demo --detach
-./bin/ship reconcile demo --wait
+ship list
+ship status demo
+ship publish demo --detach
+ship reconcile demo --wait
+ship check demo
+ship logs demo
+ship serve --open
 ```
 
-`demo` 指用户已经登记并授权的本地项目。发布前程序会重新检查资源归属和费用条件。平台部署结果与应用访问结果分别记录：网络超时不等于部署失败。
+`demo` 是已经关联的项目名；第一次安装列表为空。源码需符合当前容器约定，且先有 Vercel / Railway 应用与 Neon 数据库。首次创建云资源尚未实现。
+
+网页只监听本机 `127.0.0.1`。完整启动地址含本地会话密钥，请勿分享。发布前程序会重新检查资源归属和费用条件，平台部署结果与应用访问结果分别记录。
 
 ## 验证范围
 

@@ -1,80 +1,66 @@
-# 独立试用：从空白本地安装到一次更新
+# 开始使用 Ship
 
-目标：由没有参与 Ship 开发的人，用自己的电脑和云账号完成关联、检查、发布、更新与日志读取。作者代操作和作者已有账号的验收不计入独立试用。
+Ship 让你的编码 Agent 部署、检查和维护你自己云账号中的应用，也提供本地网页。新项目默认使用 **Vercel + Neon**。
 
-## 试用范围
+## 1. 安装 CLI 和 Skill
 
-- 当前安装入口只验收 macOS Apple Silicon；Windows 尚未适配。
-- 新项目默认使用 Vercel + Neon；后续发布沿用项目绑定，已有 Railway 项目仍使用 Railway。
-- 准备自己已有的 Vercel Hobby HTTP 容器应用与 Neon Free 数据库。应用需符合 Hobby 的个人非商业用途条件，并能访问 `/healthz` 和 `/readyz`。
-- 应用源码包含 `Dockerfile.vercel` 与 `vercel.json`，后者在当前 Alpha 中只包含 `{"framework":"container"}`。
-- 首次创建云项目、配置数据库连接与域名仍由供应商工具完成。Ship 本次试用验证的是对已有资源的日常管理。
+当前支持 **macOS Apple Silicon（M 系列）**，需要 [Node.js 24 或更新版本及 npm](https://nodejs.org/en/download)。不需要 Go、Git 或自己编译 Ship。
 
-## 1. 安装
-
-准备 Go 1.24+、Node.js 24 和 npm：
+在终端执行：
 
 ```sh
-git clone https://github.com/unix2dos/ship.git
-cd ship
-sh scripts/install.sh
-"$HOME/.local/share/ship/bin/ship" serve --open
+curl -fsSL https://github.com/unix2dos/ship/releases/download/v0.1.0-alpha.1/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+ship --version
 ```
 
-已有安装目录时，向安装脚本传入另一个不存在的绝对路径。默认本地记录在 `~/.ship`；业务密钥若由用户主动保存，会以权限受限的明文文件存放，详情见 [本地业务密钥](ALPHA.md#本地业务密钥)。首次关联已有应用不需要导入或重写平台上的 Secret。
+安装成功会显示 `ship v0.1.0-alpha.1`。安装器会：
 
-## 2. 登录并关联自己的应用
+- 下载预编译 CLI，核对 SHA-256，再安装固定版本的供应商工具。
+- 提供 `~/.local/bin/ship`，并自动配置 zsh / bash 的 PATH。上面的 `export` 让当前终端立即生效，新终端无需再执行。
+- 同时安装 Skill：Codex 使用 `~/.agents/skills/ship`，Claude Code 使用 `~/.claude/skills/ship`。
 
-从安装目录调用官方工具登录：
+不需要 sudo。已有同名命令、其他来源的同名 Skill 或旧安装目录会明确提示，不会覆盖。相同版本可以重复运行安装命令以补齐 PATH 和 Skill。
+
+## 2. 让 Agent 帮你接入
+
+安装后在 Agent 中发起下一轮对话。Codex 可输入 `$ship`，Claude Code 可输入 `/ship`；如果没有出现，重启 Agent 后再试。
+
+把下面这段和你的应用源码目录、现有访问地址一起发给它：
+
+> 使用 Ship，帮我登录自己的 Vercel 和 Neon 账号，关联这个已有应用，命名为 demo。先核对账号、套餐和应用状态，再帮我完成一次部署。沿用已有数据库和 Secret；登录授权需要我操作时告诉我。
+
+Agent 会按 Skill 调用本机 CLI，并引导你完成官方登录。凭证留在本机，不需要粘贴到聊天中。Hobby 的个人非商业用途条件与发布授权会在关联时说明。
+
+**当前 Alpha 的边界：**你需要已有的 Vercel Hobby 应用和 Neon Free 数据库，且有可用访问地址。源码需包含 `Dockerfile.vercel`、内容为 `{"framework":"container"}` 的 `vercel.json`，以及 `/healthz`、`/readyz` 检查接口。首次创建云资源尚未实现；只有代码、还没有云资源时，Agent 应说明这个缺口。Windows 和 Intel Mac 安装包尚未发布。
+
+## 3. 日常使用
+
+在任意目录都可以运行：
 
 ```sh
-cd "$HOME/.local/share/ship"
-mkdir -p "$HOME/.config/ship-vercel"
-chmod 700 "$HOME/.config/ship-vercel"
-env -u VERCEL_TOKEN -u VERCEL_ORG_ID -u VERCEL_PROJECT_ID \
-  ./tools/node_modules/.bin/vercel login --global-config "$HOME/.config/ship-vercel"
-env -u NEON_API_KEY -u NEON_PROFILE \
-  ./tools/node_modules/.bin/neon login --config-dir "$HOME/.config/neon" --no-analytics
+ship list
+ship status demo
+ship publish demo --detach
+ship reconcile demo --wait
+ship check demo
+ship logs demo
 ```
 
-然后让能够执行本机命令的编码 Agent 阅读安装目录中的 `skills/ship/SKILL.md`，提供应用源码目录、现有访问地址和想使用的工作区。可直接说：
+也可以直接告诉 Agent：“用 Ship 发布 demo”“检查 demo 状态”“查看 demo 日志”。后续更新沿用项目绑定；已有 Railway 项目仍使用 Railway。
 
-> 关联这个已有应用，核对我的 Vercel Hobby 和 Neon Free 资源，命名为 demo，并授权日常源码发布。沿用现有 Secret。Vercel 登录目录是 ~/.config/ship-vercel。先检查状态，再说明结果。
-
-也可按 [Alpha 使用说明](ALPHA.md#vercel-接入的当前边界) 调用 `register`。凭证通过官方登录留在本机，不粘贴到聊天或反馈中。
-
-## 3. 完成一次部署和更新
-
-从安装目录运行：
+想使用可视化界面时运行：
 
 ```sh
-./bin/ship status demo
-./bin/ship check demo
-./bin/ship publish demo --detach
-./bin/ship reconcile demo --wait
-./bin/ship check demo
-./bin/ship logs demo
+ship serve --open
 ```
 
-在浏览器打开应用地址，确认页面或版本信息符合本次源码。随后改一处能识别的新版本标记，再重复发布和核对。若应用有测试数据，确认更新后仍然存在；只使用自己准备的试验数据。
+网页只在本机运行。运行窗口需要保持开启；完整启动地址包含会话密钥，不要分享。
 
-`deployed` 表示平台完成部署；访问检查和业务结果应分别确认。若出现 `unknown`，记录操作 ID 并使用 `reconcile`，不要用另一次 `publish` 替代原操作，也不要删除历史记录。
+## 试用反馈
 
-## 4. 返回最小反馈
+首次部署后修改一处版本标记，再部署一次，检查浏览器能否访问新版本、原有测试数据是否保留。结果未知时先让 Agent 执行 `reconcile`，不要重复发布。
 
-记录以下内容即可：
+反馈告诉我们：系统和芯片、`ship --version`、卡在哪一步、脱敏后的错误。不要附上云登录文件、数据库连接串或 `~/.ship/secrets/`。
 
-| 项目 | 反馈 |
-| --- | --- |
-| 系统、芯片、Go / Node 版本 | |
-| 测试的 Ship 提交版本 | |
-| 安装与官方登录是否完成 | |
-| 关联资源是否需要作者帮助 | |
-| 首次发布、更新、浏览器访问是否通过 | |
-| 更新后测试数据是否保留 | |
-| 哪一步最费时间或最难理解 | |
-| 失败命令、脱敏错误及操作 ID | |
-
-不附上 `~/.ship/secrets/`、官方 CLI 登录文件、数据库连接串、本地页面的会话密钥或未经检查的完整日志。
-
-独立试用尚待实际参与者完成；这份清单本身不代表外部验收通过。
+[详细用法与存储说明](ALPHA.md) · [提交反馈](https://github.com/unix2dos/ship/issues)

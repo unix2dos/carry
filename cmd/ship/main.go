@@ -13,7 +13,9 @@ import (
 	"syscall"
 )
 
-const help = `ship — internal alpha, existing Railway or Vercel + Neon project bindings
+var version = "dev"
+
+const help = `ship — alpha, existing Railway or Vercel + Neon project bindings
 
 Global flags (before command):
   --state-dir PATH       Private local records (default: ~/.ship; existing legacy state reused)
@@ -24,6 +26,7 @@ Global flags (before command):
   --vercel-config PATH   Existing private Vercel authentication directory
 
 Commands:
+  version               Print the installed CLI version (also: --version)
   register --name NAME --source DIR --url HTTPS_ORIGIN [--provider vercel|railway]
     --vercel-team ID --vercel-project ID
     --neon-org ID --neon-project ID --neon-endpoint ID
@@ -111,6 +114,10 @@ func main() {
 	}
 }
 func run(ctx context.Context, args []string) error {
+	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
+		fmt.Println("ship " + version)
+		return nil
+	}
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return err

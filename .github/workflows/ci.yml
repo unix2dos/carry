@@ -43,3 +43,8 @@ jobs:
         run: CGO_ENABLED=0 go build -trimpath -buildvcs=false -o bin/ship ./cmd/ship
       - name: Check browser script
         run: node --check cmd/ship/web/app.js
+      - name: Check installer without network or cloud credentials
+        run: python3 validation/installer-smoke.py
+      - name: Validate provider dependency lock
+        working-directory: validation/cloud-tools
+        run: npm ci --ignore-scripts --dry-run --no-audit --no-fund

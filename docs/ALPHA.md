@@ -2,25 +2,19 @@
 
 本版把已验证的 Railway Trial / Vercel Hobby + Neon 链路接入 CLI 和极简网页。它关联已有资源，读取真实状态与日志，将当前 Dockerfile 项目发布到指定服务，并记录操作以供中断后核对。原型的模拟页面仍保留在 `docs/prototypes`，这里运行的是实际工具。
 
-当前先在 macOS / arm64 验收。Go 程序仅使用标准库，浏览器资源打包在可执行文件中；沿用项目内固定版本的 Railway 5.57.2、Neon 4.18.0 和 Vercel 59.20.0 官方 CLI。Neon / Vercel CLI 仍需要 Node.js；当前 Vercel 实验使用 Node.js 24。公开安装包、其他系统的完整验收及自动创建资源尚未完成。
+当前先在 macOS / arm64 验收。Go 程序仅使用标准库，浏览器资源打包在可执行文件中；沿用项目内固定版本的 Railway 5.57.2、Neon 4.18.0 和 Vercel 59.20.0 官方 CLI。Neon / Vercel CLI 仍需要 Node.js；当前 Vercel 实验使用 Node.js 24。已提供 macOS arm64 预编译安装包；其他系统的完整验收及自动创建资源尚未完成。
 
-## 从源码安装（macOS arm64）
+## 安装 CLI 与 Skill（macOS arm64）
 
-准备 Go 1.24+、Node.js 20.19+ 和 npm，在源码根目录运行：
+准备 Node.js 24+ 和 npm，按 [安装指南](FIRST-TRY.md) 下载预编译包。安装器自动配置 zsh / bash 的 PATH，提供 `ship` 命令，并通过符号链接把同一份 Skill 注册到 `~/.agents/skills/ship`（Codex）和 `~/.claude/skills/ship`（Claude Code）。不需要 Go、Git 或 sudo。
 
-```sh
-sh scripts/install.sh
-cd "$HOME/.local/share/ship"
-./bin/ship serve --open
-```
+默认安装目录是 `~/.local/share/ship`。同版本可重复运行以补齐 PATH 与 Skill；其他版本或旧源码安装目录需先保留为备份，避免覆盖。自定义目录可把一个不存在的绝对路径传给安装脚本；命令链接与 Skill 链接仍指向这个目录。
 
-安装程序编译 Ship，并安装锁定版本的官方 CLI 到同一目录。它不需要 sudo，不修改 shell 或全局 npm 包，也不会登录云账号或创建云资源。安装需要网络下载依赖；完成后不依赖原源码目录。其他平台尚未验收，安装程序会明确停止。
+安装器只向当前 shell 的启动文件追加一行 PATH 配置，不改动原有内容。zsh 使用 `.zshrc` / `.zprofile` 并尊重 `ZDOTDIR`；bash 使用 `.bashrc` 和已存在的登录配置，没有登录配置时使用 `.profile`。子进程不能改变已打开终端的环境，因此当前终端需执行一次 `export PATH="$HOME/.local/bin:$PATH"`，新终端会自动生效。Agent 未发现 Skill 时重启它。
 
-默认安装目录为 `~/.local/share/ship`；可把一个尚不存在的绝对路径作为脚本参数。已有目录不会被覆盖，升级时先安装到另一个目录。云登录与 Ship 的项目状态保存在安装目录以外，切换可执行文件不需要重新登记。
+新安装默认使用 `~/.ship`；该目录不存在时沿用用户配置目录下已有的 `ship` / `upok`，保留项目、授权和发布历史。`--state-dir` 可显式指定目录。旧的 `UPOK_RAILWAY_BIN` / `UPOK_NEON_BIN` 环境变量仍可用，新的 `SHIP_*` 变量优先；显式参数和已保存工具路径维持原有优先级。切换 CLI 不会迁移云资源。历史 `upok:` / `pdeploy:` 发布标记保持原值，新操作使用 `ship:`。
 
-从 UpOK 升级时，先关闭旧的本地服务，再启动 Ship。新安装默认使用 `~/.ship`；若该目录不存在，工具会依次查找用户配置目录下已有的 `ship` / `upok`，保留项目、授权和发布历史；`--state-dir` 可显式指定目录。旧的 `UPOK_RAILWAY_BIN` / `UPOK_NEON_BIN` 环境变量仍可用，新的 `SHIP_*` 变量优先；显式参数和已保存的工具路径维持原有优先级。旧安装可留存供已有工具路径使用。历史 `upok:` / `pdeploy:` 发布标记保持原值，新操作使用 `ship:`。
-
-以下 `./bin/ship` 和 `./tools/…` 命令均从安装目录运行。已有部署管理记录但没有供应商登录时，仍可打开网页查看本地记录；刷新和发布需要先完成登录。
+如需卸载，只移除本安装创建的 `~/.local/bin/ship`、上述两个 Skill 链接、启动文件中带 `# ship` 的一行及安装目录；`~/.ship` 保存用户数据，独立保留。
 
 ### 开发者直接构建
 
@@ -28,7 +22,7 @@ cd "$HOME/.local/share/ship"
 
 ```sh
 # 首次从源码准备；已有 bin/ship 时可直接启动。
-npm ci --prefix validation/cloud-tools --no-audit --no-fund
+(cd validation/cloud-tools && npm ci --no-audit --no-fund)
 go build -buildvcs=false -o bin/ship ./cmd/ship
 
 ./bin/ship serve --open
@@ -40,14 +34,14 @@ go build -buildvcs=false -o bin/ship ./cmd/ship
 
 ## 登录与关联已有项目
 
-新项目默认使用 Vercel + Neon，后续发布沿用项目已保存的平台绑定。先通过供应商官方 CLI 完成用户自己的登录授权。沿用现有登录无需重复操作；首次登录从安装目录运行：
+新项目默认使用 Vercel + Neon，后续发布沿用项目已保存的平台绑定。先通过供应商官方 CLI 完成用户自己的登录授权。沿用现有登录无需重复操作；默认安装的首次登录命令如下；自定义安装时替换供应商工具的目录：
 
 ```sh
 mkdir -p "$HOME/.config/ship-vercel"
 chmod 700 "$HOME/.config/ship-vercel"
 env -u VERCEL_TOKEN -u VERCEL_ORG_ID -u VERCEL_PROJECT_ID \
-  ./tools/node_modules/.bin/vercel login --global-config "$HOME/.config/ship-vercel"
-env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
+  "$HOME/.local/share/ship/tools/node_modules/.bin/vercel" login --global-config "$HOME/.config/ship-vercel"
+env -u NEON_API_KEY -u NEON_PROFILE "$HOME/.local/share/ship/tools/node_modules/.bin/neon" login \
   --config-dir "$HOME/.config/neon" --no-analytics
 ```
 
@@ -58,7 +52,7 @@ env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
 新安装默认将资源标识、源码路径和工具路径保存到 `~/.ship`；已有用户按上文规则沿用旧目录或显式迁移。macOS/Linux 文件权限为 0600，目录为 0700；普通项目记录不包含密钥值，业务密钥单独保存在 `secrets/项目名.json`。官方 CLI 的云账号令牌继续由官方工具管理。
 
 ```sh
-./bin/ship --vercel-config "$HOME/.config/ship-vercel" register \
+ship --vercel-config "$HOME/.config/ship-vercel" register \
   --name demo --source /path/to/your/project --url https://your-app.example \
   --vercel-team TEAM_ID --vercel-project PROJECT_ID \
   --neon-org ORG_ID --neon-project NEON_PROJECT_ID --neon-endpoint ENDPOINT_ID \
@@ -72,8 +66,8 @@ env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
 已有 Railway 项目保持原平台，包括没有 `provider` 字段的旧记录。新关联需要显式选择 Railway，并通过其官方 CLI 登录：
 
 ```sh
-env -u RAILWAY_TOKEN -u RAILWAY_API_TOKEN ./tools/node_modules/.bin/railway login
-./bin/ship register --provider railway \
+env -u RAILWAY_TOKEN -u RAILWAY_API_TOKEN "$HOME/.local/share/ship/tools/node_modules/.bin/railway" login
+ship register --provider railway \
   --name demo --source /path/to/your/project --url https://your-app.example \
   --workspace WORKSPACE_ID --railway-project PROJECT_ID \
   --service SERVICE_ID --environment ENVIRONMENT_ID \
@@ -87,18 +81,18 @@ CLI 二进制位置可用 `--vercel-bin`、`--railway-bin`、`--neon-bin` 指定
 
 ## 让现有 Agent 使用
 
-把本次安装中的 `skills/ship/SKILL.md` 提供给能够在本机执行命令的编码 Agent，例如：“阅读这里的 Ship Skill，帮我关联自己的已有应用，并检查状态。”它与 CLI、网页使用同一份记录。此安装不会自动修改 Agent 配置或全局安装 Skill。
+安装时已注册 Ship Skill。Codex 使用 `$ship`，Claude Code 使用 `/ship`；其他能读取 Skill 的 Agent 可手动读取安装目录中的 `skills/ship/SKILL.md`。Skill 与 CLI、网页共用同一份本地记录。目录规则见 [OpenAI Docs](https://learn.chatgpt.com/docs/build-skills#where-codex-loads-local-skills) 与 [Claude Code 文档](https://code.claude.com/docs/en/skills#choose-where-skills-load)。
 
 ## 常用操作
 
 ```sh
-./bin/ship list
-./bin/ship status demo
-./bin/ship check demo
-./bin/ship logs demo
-./bin/ship publish demo --detach
-./bin/ship reconcile demo --wait
-./bin/ship history demo
+ship list
+ship status demo
+ship check demo
+ship logs demo
+ship publish demo --detach
+ship reconcile demo --wait
+ship history demo
 ```
 
 `status` 查询供应商管理接口，不主动访问应用；`check` 会访问 `/healthz` 与 `/readyz`，可能唤醒休眠实例。内部版采用已验证的这两个公开检查路径，不对业务数据发起写操作。发布后的服务状态与 HTTP 检查分别记录，网络超时不会被改写成供应商部署失败。
@@ -111,9 +105,9 @@ CLI 二进制位置可用 `--vercel-bin`、`--railway-bin`、`--neon-bin` 指定
 
 ```sh
 # 输入文件按原始 UTF-8 文本读取，包含结尾换行；请由用户妥善保管。
-./bin/ship secret save demo DATABASE_URL --stdin < /path/to/private-database-url
-./bin/ship secret list demo
-./bin/ship secret check demo
+ship secret save demo DATABASE_URL --stdin < /path/to/private-database-url
+ship secret list demo
+ship secret check demo
 ```
 
 `save` 只保存本地副本，不写云端。重复保存保留版本，用于遮蔽历史日志。`list` 仅返回名称、版本数与状态；`check` 只检查本地读取，不输出密钥，也不证明云端当前值。秘密通过标准输入接收，不放进命令参数或普通项目记录。整个状态目录被排除在源码上传之外；当前没有默认打包该目录的导出功能。
@@ -160,4 +154,8 @@ python3 validation/install-smoke.py "$HOME/.local/share/ship"
 
 安装检查从临时空白状态启动网页，核对固定 CLI 版本、页面、本地认证和来源限制，不调用云平台，也不读取现有项目记录。
 
-测试覆盖丢失提交响应后的核对、重复提交阻止、费用与归属约束、私有状态、凭证过滤、源码上传边界和本地 HTTP 认证。配套 [Skill](../skills/ship/SKILL.md)随仓库提供，尚未全局安装，也未宣称跨 Agent 验收完成。
+测试覆盖丢失提交响应后的核对、重复提交阻止、费用与归属约束、私有状态、凭证过滤、源码上传边界和本地 HTTP 认证。配套 [Skill](../skills/ship/SKILL.md)随安装器注册。目录与安装行为有本地检查，独立开发者的完整跨 Agent 试用仍待完成。
+
+## 构建发布包
+
+维护者在源码目录运行 `sh scripts/package.sh v0.1.0-alpha.1`，生成带版本号的 macOS arm64 包、SHA-256 校验文件和安装脚本。打包清单仅包含二进制、文档、Skill、依赖清单与许可证；发布包不包含本机状态或云凭证。生成后单独发布到对应 GitHub Release。

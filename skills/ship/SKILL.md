@@ -5,7 +5,9 @@ description: "Manage projects registered with the local ship tool: inspect real 
 
 # Ship
 
-Use the local CLI from this repository (`bin/ship` after building). Read [the alpha guide](../../docs/ALPHA.md) when installation, authentication, project registration, or supported scope is unclear. The webpage and CLI share the same local records; opening the webpage is optional.
+Use `ship` from PATH. If this Agent process has not picked up the new PATH, use `~/.local/bin/ship`. Read the installed guide at `~/.local/share/ship/docs/ALPHA.md` for authentication, registration, or supported scope. For a custom installation, resolve the `~/.local/bin/ship` symlink and find `docs/ALPHA.md` beside its `bin` directory. Source checkouts also contain [the alpha guide](../../docs/ALPHA.md). The webpage and CLI share the same local records; opening the webpage is optional.
+
+Installation registers this Skill for Codex and Claude Code. To set up a new computer, follow [the installation guide](https://github.com/unix2dos/ship/blob/main/docs/FIRST-TRY.md). Cloud login and resource binding are separate steps; explain the current requirement for existing cloud resources before promising a first deployment.
 
 1. Run `ship list` and select the project matching the user's request. For a new binding, default to Vercel + Neon unless the user selects Railway (`--provider railway`); establish the source directory and exact resource ownership before `register`. Existing projects keep their saved provider, including legacy Railway records without a provider field. Keep cloud login credentials in the official CLI stores; resource IDs belong in the binding. Ship-owned business secrets are stored separately in private local files, never in source or chat.
 2. Run `ship status NAME`. Report the observed account plan and use restrictions; Vercel Hobby requires personal noncommercial use. Trial is a time-limited test path, not proof of a formally validated Free combination. The executable performs fresh ownership and billing checks before each publish.
