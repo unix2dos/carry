@@ -112,7 +112,7 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 		if key == "DATABASE_URL" && !databaseEndpointMatches(string(value), host) {
 			return empty, errors.New("DATABASE_URL does not match the registered Neon endpoint")
 		}
-		last.Marker = "ship-secret:" + last.Ref
+		last.Marker = "carry-secret:" + last.Ref
 		last.SyncState = "applying"
 		last.RemoteID = ""
 		last.RemoteUpdatedAt = 0

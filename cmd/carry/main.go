@@ -15,10 +15,10 @@ import (
 
 var version = "dev"
 
-const help = `ship — alpha, existing Railway or Vercel projects with optional Neon
+const help = `carry — alpha, existing Railway or Vercel projects with optional Neon
 
 Global flags (before command):
-  --state-dir PATH       Private local records (default: ~/.ship; existing legacy state reused)
+  --state-dir PATH       Private local records (default: ~/.carry; existing legacy state reused)
   --railway-bin PATH     Official Railway CLI binary; no global installation is performed
   --neon-bin PATH        Official Neon CLI
   --neon-config PATH     Existing private Neon authentication directory
@@ -57,11 +57,11 @@ in private local files and never printed. Official CLI login credentials stay wi
 the official tools. Use one explicit project authorization for regular updates.
 `
 
-func resolveTool(explicit, envName, legacyEnvName, name, relative string) string {
+func resolveTool(explicit, name, relative string, envNames ...string) string {
 	if explicit != "" {
 		return explicit
 	}
-	for _, key := range []string{envName, legacyEnvName} {
+	for _, key := range envNames {
 		if v := os.Getenv(key); v != "" {
 			return v
 		}
@@ -85,12 +85,12 @@ func resolveTool(explicit, envName, legacyEnvName, name, relative string) string
 }
 
 func defaultStateDir(home, base string) string {
-	for _, path := range []string{filepath.Join(home, ".ship"), filepath.Join(base, "ship"), filepath.Join(base, "upok")} {
+	for _, path := range []string{filepath.Join(home, ".carry"), filepath.Join(home, ".ship"), filepath.Join(base, "carry"), filepath.Join(base, "ship"), filepath.Join(base, "upok")} {
 		if _, err := os.Lstat(path); !os.IsNotExist(err) {
 			return path
 		}
 	}
-	return filepath.Join(home, ".ship")
+	return filepath.Join(home, ".carry")
 }
 
 type Settings struct {
@@ -115,7 +115,7 @@ func main() {
 }
 func run(ctx context.Context, args []string) error {
 	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
-		fmt.Println("ship " + version)
+		fmt.Println("carry " + version)
 		return nil
 	}
 	base, err := os.UserConfigDir()
@@ -126,7 +126,7 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	flags := flag.NewFlagSet("ship", flag.ContinueOnError)
+	flags := flag.NewFlagSet("carry", flag.ContinueOnError)
 	stateDir := flags.String("state-dir", defaultStateDir(home, base), "private local state")
 	rwy := flags.String("railway-bin", "", "official Railway CLI")
 	neon := flags.String("neon-bin", "", "official Neon CLI")
@@ -171,7 +171,7 @@ func run(ctx context.Context, args []string) error {
 	if settings.NeonConfig == "" {
 		settings.NeonConfig = filepath.Join(home, ".config", "neon")
 	}
-	providers := &Providers{Railway: resolveTool(settings.Railway, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway"), Neon: resolveTool(settings.Neon, "SHIP_NEON_BIN", "UPOK_NEON_BIN", "neon", ".bin/neon"), NeonConfig: settings.NeonConfig, Vercel: resolveTool(settings.Vercel, "SHIP_VERCEL_BIN", "UPOK_VERCEL_BIN", "vercel", ".bin/vercel"), VercelConfig: settings.VercelConfig, Store: store}
+	providers := &Providers{Railway: resolveTool(settings.Railway, "railway", "@railway/cli/bin/railway", "CARRY_RAILWAY_BIN", "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN"), Neon: resolveTool(settings.Neon, "neon", ".bin/neon", "CARRY_NEON_BIN", "SHIP_NEON_BIN", "UPOK_NEON_BIN"), NeonConfig: settings.NeonConfig, Vercel: resolveTool(settings.Vercel, "vercel", ".bin/vercel", "CARRY_VERCEL_BIN", "SHIP_VERCEL_BIN", "UPOK_VERCEL_BIN"), VercelConfig: settings.VercelConfig, Store: store}
 	engine := &Engine{Store: store, Providers: providers}
 	switch args[0] {
 	case "secret":
@@ -348,7 +348,7 @@ func run(ctx context.Context, args []string) error {
 		}
 		return err
 	default:
-		return errors.New("unknown command; run ship help")
+		return errors.New("unknown command; run carry help")
 	}
 	return nil
 }

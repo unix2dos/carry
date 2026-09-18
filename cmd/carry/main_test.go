@@ -338,15 +338,15 @@ func TestCompletedHistoryIsStable(t *testing.T) {
 }
 
 func TestLegacyMarkerSurvivesRename(t *testing.T) {
-	for _, prefix := range []string{"upok:", "pdeploy:"} {
+	for _, prefix := range []string{"ship:", "upok:", "pdeploy:"} {
 		t.Run(prefix, func(t *testing.T) {
 			e, p := fixture(t)
 			op, err := newOperation(p.Name)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !strings.HasPrefix(op.Marker, "ship:") {
-				t.Fatal("new operation did not use the Ship marker")
+			if !strings.HasPrefix(op.Marker, "carry:") {
+				t.Fatal("new operation did not use the Carry marker")
 			}
 			op.Marker = prefix + op.ID
 			op.State = "unknown"
@@ -366,7 +366,7 @@ func TestLegacyMarkerSurvivesRename(t *testing.T) {
 		})
 	}
 	e, p := fixture(t)
-	for _, name := range []string{".pdeploy", ".upok", ".ship"} {
+	for _, name := range []string{".pdeploy", ".upok", ".ship", ".carry"} {
 		if err := os.Mkdir(filepath.Join(p.Source, name), 0700); err != nil {
 			t.Fatal(err)
 		}
@@ -387,11 +387,11 @@ func TestLegacyMarkerSurvivesRename(t *testing.T) {
 func TestRenameReusesExistingState(t *testing.T) {
 	base := t.TempDir()
 	home := filepath.Join(base, "home")
-	shipDir := filepath.Join(home, ".ship")
-	if defaultStateDir(home, base) != shipDir {
-		t.Fatal("fresh installation did not select Ship state")
+	carryDir := filepath.Join(home, ".carry")
+	if defaultStateDir(home, base) != carryDir {
+		t.Fatal("fresh installation did not select Carry state")
 	}
-	legacy, err := newStore(filepath.Join(base, "upok"))
+	legacy, err := newStore(filepath.Join(home, ".ship"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -407,28 +407,33 @@ func TestRenameReusesExistingState(t *testing.T) {
 	if err != nil || got != p {
 		t.Fatal("rename lost an existing project or its authorizations")
 	}
-	if _, err = os.Stat(shipDir); !os.IsNotExist(err) {
+	if _, err = os.Stat(carryDir); !os.IsNotExist(err) {
 		t.Fatal("legacy state was split into a new directory")
 	}
-	if _, err = newStore(shipDir); err != nil {
+	if _, err = newStore(carryDir); err != nil {
 		t.Fatal(err)
 	}
-	if defaultStateDir(home, base) != shipDir {
-		t.Fatal("existing Ship state was replaced with legacy state")
+	if defaultStateDir(home, base) != carryDir {
+		t.Fatal("existing Carry state was replaced with legacy state")
 	}
 }
 
 func TestLegacyToolEnvironment(t *testing.T) {
+	t.Setenv("CARRY_RAILWAY_BIN", "")
 	t.Setenv("SHIP_RAILWAY_BIN", "")
 	t.Setenv("UPOK_RAILWAY_BIN", "/legacy/railway")
 	resolve := func(explicit string) string {
-		return resolveTool(explicit, "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN", "railway", "@railway/cli/bin/railway")
+		return resolveTool(explicit, "railway", "@railway/cli/bin/railway", "CARRY_RAILWAY_BIN", "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN")
 	}
 	if resolve("") != "/legacy/railway" {
 		t.Fatal("legacy tool override was lost")
 	}
 	t.Setenv("SHIP_RAILWAY_BIN", "/ship/railway")
-	if resolve("") != "/ship/railway" || resolve("/explicit/railway") != "/explicit/railway" {
+	if resolve("") != "/ship/railway" {
+		t.Fatal("Ship tool override was lost")
+	}
+	t.Setenv("CARRY_RAILWAY_BIN", "/carry/railway")
+	if resolve("") != "/carry/railway" || resolve("/explicit/railway") != "/explicit/railway" {
 		t.Fatal("tool override priority changed")
 	}
 }

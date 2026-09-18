@@ -34,15 +34,15 @@ jobs:
         with:
           node-version: '24'
       - name: Check Go formatting
-        run: test -z "$(gofmt -l cmd/ship)"
+        run: test -z "$(gofmt -l cmd/carry)"
       - name: Test local behavior without cloud credentials
-        run: go test -race ./cmd/ship
+        run: go test -race ./cmd/carry
       - name: Go vet
-        run: go vet ./cmd/ship
+        run: go vet ./cmd/carry
       - name: Build without cgo
-        run: CGO_ENABLED=0 go build -trimpath -buildvcs=false -o bin/ship ./cmd/ship
+        run: CGO_ENABLED=0 go build -trimpath -buildvcs=false -o bin/carry ./cmd/carry
       - name: Check browser script
-        run: node --check cmd/ship/web/app.js
+        run: node --check cmd/carry/web/app.js
       - name: Check installer without network or cloud credentials
         run: python3 validation/installer-smoke.py
       - name: Validate provider dependency lock

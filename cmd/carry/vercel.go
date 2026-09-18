@@ -264,7 +264,10 @@ func (v *Providers) vercelDeployments(ctx context.Context, p Project) ([]Deploym
 			continue
 		}
 		d := Deployment{ID: item.UID, Status: item.State, AliasAssigned: aliasAssigned(item.AliasAssigned)}
-		d.Meta.Message = item.Meta["ship_operation"]
+		d.Meta.Message = item.Meta["carry_operation"]
+		if d.Meta.Message == "" {
+			d.Meta.Message = item.Meta["ship_operation"]
+		}
 		result = append(result, d)
 	}
 	return result, nil
@@ -272,7 +275,7 @@ func (v *Providers) vercelDeployments(ctx context.Context, p Project) ([]Deploym
 
 func (v *Providers) submit(ctx context.Context, p Project, stage, marker string) error {
 	if p.Provider == "vercel" {
-		_, err := v.vercelCall(ctx, p, nil, "deploy", stage, "--project", p.VercelProject, "--prod", "--yes", "--json", "--no-wait", "--meta", "ship_operation="+marker)
+		_, err := v.vercelCall(ctx, p, nil, "deploy", stage, "--project", p.VercelProject, "--prod", "--yes", "--json", "--no-wait", "--meta", "carry_operation="+marker)
 		return err
 	}
 	args := append([]string{"up", stage, "--path-as-root"}, selectors(p)...)

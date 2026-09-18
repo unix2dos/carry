@@ -11,20 +11,20 @@ mkdir -p "$out"
 out=$(CDPATH= cd -- "$out" && pwd)
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT HUP INT TERM
-bundle="$stage/ship"
-mkdir -p "$bundle/bin" "$bundle/tools" "$bundle/docs/research" "$bundle/skills/ship" "$bundle/validation/results"
-(cd "$repo" && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -buildvcs=false -ldflags "-X main.version=$version" -o "$bundle/bin/ship" ./cmd/ship)
+bundle="$stage/carry"
+mkdir -p "$bundle/bin" "$bundle/tools" "$bundle/docs/research" "$bundle/skills/carry" "$bundle/validation/results"
+(cd "$repo" && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -buildvcs=false -ldflags "-X main.version=$version" -o "$bundle/bin/carry" ./cmd/carry)
 printf '%s\n' "$version" > "$bundle/VERSION"
 git -C "$repo" rev-parse HEAD > "$bundle/SOURCE_COMMIT"
 cp "$repo/LICENSE" "$bundle/"
 cp "$repo/validation/cloud-tools/package.json" "$repo/validation/cloud-tools/package-lock.json" "$bundle/tools/"
 cp "$repo/docs/ALPHA.md" "$repo/docs/FIRST-TRY.md" "$bundle/docs/"
 cp "$repo/docs/research/2026-09-16-free-plan-boundaries.md" "$bundle/docs/research/"
-cp "$repo/skills/ship/SKILL.md" "$bundle/skills/ship/"
+cp "$repo/skills/carry/SKILL.md" "$bundle/skills/carry/"
 cp "$repo/validation/VERCEL-RESULTS.md" "$bundle/validation/"
 cp "$repo/validation/results/vercel-secret-update-diagnosis.json" "$repo/validation/results/ship-vercel-acceptance.json" "$bundle/validation/results/"
-asset="ship-$version-darwin-arm64.tar.gz"
-COPYFILE_DISABLE=1 tar -czf "$out/$asset" -C "$stage" ship
+asset="carry-$version-darwin-arm64.tar.gz"
+COPYFILE_DISABLE=1 tar -czf "$out/$asset" -C "$stage" carry
 (cd "$out" && shasum -a 256 "$asset" > "$asset.sha256")
 cp "$repo/scripts/install.sh" "$out/install.sh"
 printf '%s\n' "$out"

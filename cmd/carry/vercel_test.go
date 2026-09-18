@@ -104,7 +104,7 @@ func newVercelFixture(t *testing.T) *vercelFixture {
 			}
 			for i, a := range args {
 				if a == "--meta" {
-					f.deployments = []vercelDeployment{{UID: "dpl_original", State: "BUILDING", Target: "production", Meta: map[string]string{"ship_operation": strings.TrimPrefix(args[i+1], "ship_operation=")}}}
+					f.deployments = []vercelDeployment{{UID: "dpl_original", State: "BUILDING", Target: "production", Meta: map[string]string{"carry_operation": strings.TrimPrefix(args[i+1], "carry_operation=")}}}
 				}
 			}
 			return nil, errors.New("lost deployment response")
@@ -371,5 +371,22 @@ func TestVercelOrdinarySecretWithoutNeon(t *testing.T) {
 	}
 	if _, err := f.e.syncVercelSecret(context.Background(), f.p, "DATABASE_URL", true); err == nil || f.writes != 1 {
 		t.Fatal("database configuration was rewritten without a verifiable binding")
+	}
+}
+
+func TestLegacyShipDeploymentMetadata(t *testing.T) {
+	f := newVercelFixture(t)
+	op, err := newOperation(f.p.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	op.Marker, op.State = "ship:"+op.ID, "unknown"
+	if err = f.e.Store.saveOp(&op); err != nil {
+		t.Fatal(err)
+	}
+	f.deployments = []vercelDeployment{{UID: "dpl_legacy", State: "BUILDING", Target: "production", Meta: map[string]string{"ship_operation": op.Marker}}}
+	result, err := f.e.reconcile(context.Background(), f.p, false)
+	if err != nil || result.State != "deploying" || result.Marker != op.Marker || result.DeploymentID != "dpl_legacy" || f.uploads != 0 {
+		t.Fatalf("Ship operation was not reconciled intact: %v", err)
 	}
 }

@@ -1,5 +1,5 @@
 {
-  "name": "personal-deploy-cloud-validation-tools",
+  "name": "carry-provider-tools",
   "version": "0.1.0",
   "private": true,
   "description": "Pinned official CLIs for the personal cloud validation step",

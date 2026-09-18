@@ -1,5 +1,5 @@
 {
-  "name": "ship-vercel-validation-tools",
+  "name": "carry-vercel-validation-tools",
   "version": "0.1.0",
   "private": true,
   "description": "Pinned official Vercel CLI for the isolated Ship container validation",

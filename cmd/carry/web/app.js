@@ -1,6 +1,6 @@
 'use strict';
-const token=location.hash.slice(1)||sessionStorage.getItem('ship-session')||'';
-if(location.hash){sessionStorage.setItem('ship-session',token);history.replaceState(null,'',location.pathname);}
+const token=location.hash.slice(1)||sessionStorage.getItem('carry-session')||sessionStorage.getItem('ship-session')||'';
+if(location.hash){sessionStorage.setItem('carry-session',token);history.replaceState(null,'',location.pathname);}
 const $=id=>document.getElementById(id);
 let busy=false,dialogOpener=null;
 const terminal=new Set(['deployed','failed','blocked']);
@@ -16,7 +16,7 @@ function time(value){return value?new Date(value).toLocaleString():'尚未检查
 function showDialog(title,text,opener=document.activeElement){dialogOpener=opener;$('dialog-title').textContent=title;const pre=document.createElement('pre');pre.textContent=text;$('dialog-body').replaceChildren(pre);$('dialog').showModal();}
 $('close').addEventListener('click',()=>$('dialog').close());
 $('dialog').addEventListener('close',()=>{if(dialogOpener?.isConnected)dialogOpener.focus();load().catch(e=>message(e.message,true));});
-$('add').addEventListener('click',()=>showDialog('关联已有应用','先关联已有 Vercel 或 Railway 应用。只有应用需要时才关联 Neon 数据库。\n\n在已有 Agent 中选择项目，让它使用安装好的 ship Skill，核对资源归属后运行 register。\n\n首次创建云资源、通用资源接管和数据库迁移尚未接入这一版。'));
+$('add').addEventListener('click',()=>showDialog('关联已有应用','先关联已有 Vercel 或 Railway 应用。只有应用需要时才关联 Neon 数据库。\n\n在已有 Agent 中选择项目，让它使用安装好的 carry Skill，核对资源归属后运行 register。\n\n首次创建云资源、通用资源接管和数据库迁移尚未接入这一版。'));
 async function load(){
  const views=await api('projects');const fragment=document.createDocumentFragment();
  for(const view of views){

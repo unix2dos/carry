@@ -109,7 +109,7 @@ func TestSecretStorageAndRotationKeepValuesOutOfOrdinaryRecords(t *testing.T) {
 	}
 
 	cmd := exec.Command(os.Args[0], "-test.run=^TestSecretFileChild$")
-	cmd.Env = append(os.Environ(), "SHIP_TEST_SECRET_DIR="+e.Store.Root)
+	cmd.Env = append(os.Environ(), "CARRY_TEST_SECRET_DIR="+e.Store.Root)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("separate-process read failed: %v", err)
@@ -120,7 +120,7 @@ func TestSecretStorageAndRotationKeepValuesOutOfOrdinaryRecords(t *testing.T) {
 }
 
 func TestSecretFileChild(t *testing.T) {
-	root := os.Getenv("SHIP_TEST_SECRET_DIR")
+	root := os.Getenv("CARRY_TEST_SECRET_DIR")
 	if root == "" {
 		t.Skip("child of private-file persistence check")
 	}

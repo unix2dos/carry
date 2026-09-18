@@ -112,7 +112,7 @@ func (e *Engine) logs(ctx context.Context, p Project) ([]string, error) {
 	return lines, nil
 }
 func excluded(name string) bool {
-	for _, v := range []string{".git", ".vercel", "node_modules", ".venv", "__pycache__", "target", ".ship", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
+	for _, v := range []string{".git", ".vercel", "node_modules", ".venv", "__pycache__", "target", ".carry", ".ship", ".upok", ".pdeploy", ".ssh", ".aws", ".netrc", ".npmrc"} {
 		if name == v {
 			return true
 		}
@@ -124,7 +124,7 @@ func bundleSource(source, root string, secrets []string) (dir, digest string, co
 	if rel, e := filepath.Rel(source, root); e == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 		return "", "", 0, errors.New("the source directory must not contain local tool state")
 	}
-	dir, err = os.MkdirTemp("", "ship-source-*")
+	dir, err = os.MkdirTemp("", "carry-source-*")
 	if err != nil {
 		return
 	}

@@ -11,5 +11,6 @@ bin/
 .vercel/
 *.private.*
 
-# Local Ship records and plaintext business secrets
+# Local Carry records and plaintext business secrets
+.carry/
 .ship/
