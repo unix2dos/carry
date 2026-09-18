@@ -6,6 +6,8 @@ Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 
 **当前为 Alpha。** 已验证 Railway Trial + Neon Free，以及个人非商业用途的 Vercel Hobby + Neon Free HTTP 容器路径。正式 Railway Free 和付费账号的发布路径尚未验收，程序会停止这些账号的发布操作。软件采用 MIT 开源；云资源的费用与用途限制取决于供应商套餐。
 
+新项目默认使用 **Vercel + Neon**；选择 Railway 时登记需指定 `--provider railway`。后续发布沿用项目已保存的平台绑定，已有 Railway 项目保持原平台。
+
 ## 已实现
 
 - 关联已有 Railway 或 Vercel 项目与 Neon PostgreSQL，核对资源归属和费用条件；数据库连接目标的可核验范围单独显示。

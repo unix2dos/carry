@@ -5,6 +5,7 @@
 ## 试用范围
 
 - 当前安装入口只验收 macOS Apple Silicon；Windows 尚未适配。
+- 新项目默认使用 Vercel + Neon；后续发布沿用项目绑定，已有 Railway 项目仍使用 Railway。
 - 准备自己已有的 Vercel Hobby HTTP 容器应用与 Neon Free 数据库。应用需符合 Hobby 的个人非商业用途条件，并能访问 `/healthz` 和 `/readyz`。
 - 应用源码包含 `Dockerfile.vercel` 与 `vercel.json`，后者在当前 Alpha 中只包含 `{"framework":"container"}`。
 - 首次创建云项目、配置数据库连接与域名仍由供应商工具完成。Ship 本次试用验证的是对已有资源的日常管理。

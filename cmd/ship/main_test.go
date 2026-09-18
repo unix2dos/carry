@@ -24,6 +24,33 @@ func fixture(t *testing.T) (*Engine, Project) {
 	return &Engine{Store: store, Providers: &Providers{}}, p
 }
 func jsonBytes(v any) []byte { b, _ := json.Marshal(v); return b }
+
+func TestRegistrationProviderSelection(t *testing.T) {
+	for _, tc := range []struct {
+		name, provider, dockerfile string
+	}{
+		{"default", "", "Dockerfile.vercel"},
+		{"explicit_railway", "railway", "Dockerfile"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			args := []string{"--state-dir", filepath.Join(t.TempDir(), "state"), "register",
+				"--name", "demo", "--source", t.TempDir(), "--url", "https://demo.example.test",
+				"--vercel-team", "team_demo", "--vercel-project", "prj_demo",
+				"--workspace", "workspace-demo", "--railway-project", "project-demo",
+				"--service", "service-demo", "--environment", "environment-demo",
+				"--neon-org", "org-demo", "--neon-project", "neon-demo", "--neon-endpoint", "ep-demo1"}
+			if tc.provider != "" {
+				args = append(args, "--provider", tc.provider)
+			}
+			// An empty source stops at the selected provider's contract before any cloud call.
+			err := run(context.Background(), args)
+			if err == nil || err.Error() != "internal alpha requires a source directory with "+tc.dockerfile {
+				t.Fatalf("unexpected source requirement: %v", err)
+			}
+		})
+	}
+}
+
 func healthyProvider(tool string, args []string) ([]byte, error) {
 	joined := strings.Join(args, " ")
 	if tool == "railway" && args[0] == "api" {

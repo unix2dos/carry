@@ -40,22 +40,40 @@ go build -buildvcs=false -o bin/ship ./cmd/ship
 
 ## 登录与关联已有项目
 
-先通过供应商官方 CLI 完成用户自己的 OAuth 登录。沿用现有登录无需重复操作；首次登录从安装目录运行：
+新项目默认使用 Vercel + Neon，后续发布沿用项目已保存的平台绑定。先通过供应商官方 CLI 完成用户自己的登录授权。沿用现有登录无需重复操作；首次登录从安装目录运行：
 
 ```sh
-env -u RAILWAY_TOKEN -u RAILWAY_API_TOKEN ./tools/node_modules/.bin/railway login
+mkdir -p "$HOME/.config/ship-vercel"
+chmod 700 "$HOME/.config/ship-vercel"
+env -u VERCEL_TOKEN -u VERCEL_ORG_ID -u VERCEL_PROJECT_ID \
+  ./tools/node_modules/.bin/vercel login --global-config "$HOME/.config/ship-vercel"
 env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
   --config-dir "$HOME/.config/neon" --no-analytics
 ```
 
-浏览器中选择自己的账号，密钥留在官方 CLI 中。Railway 使用 `~/.railway/config.json`，Neon 使用上述显式目录。已有 Neon 登录位于其他目录时，登记项目使用 `--neon-config` 指向它。源码直接构建时，官方 CLI 路径为 `validation/cloud-tools/node_modules/.bin/`。
+浏览器中选择自己的账号，密钥留在官方 CLI 的上述目录中。已有登录位于其他目录时，登记项目使用 `--vercel-config`、`--neon-config` 指向它。源码直接构建时，官方 CLI 路径为 `validation/cloud-tools/node_modules/.bin/`。
 
 当前需先有 Railway 服务或 Vercel 项目、Neon PostgreSQL 和可用应用地址。可让现有 Agent 从用户选定的账号查询资源 ID，再调用下方登记命令；界面尚未提供自动创建资源或账号选择器。内部版不会启用付费。
 
 新安装默认将资源标识、源码路径和工具路径保存到 `~/.ship`；已有用户按上文规则沿用旧目录或显式迁移。macOS/Linux 文件权限为 0600，目录为 0700；普通项目记录不包含密钥值，业务密钥单独保存在 `secrets/项目名.json`。官方 CLI 的云账号令牌继续由官方工具管理。
 
 ```sh
-./bin/ship register \
+./bin/ship --vercel-config "$HOME/.config/ship-vercel" register \
+  --name demo --source /path/to/your/project --url https://your-app.example \
+  --vercel-team TEAM_ID --vercel-project PROJECT_ID \
+  --neon-org ORG_ID --neon-project NEON_PROJECT_ID --neon-endpoint ENDPOINT_ID \
+  --allow-publish --allow-hobby
+```
+
+这些 ID 必须来自用户选择的实际资源，命令中的大写值只是占位符。登记会核对资源归属、Neon 组织及端点；Vercel 隐藏的数据库连接地址仍明确标为未核验。源码需满足下文的 [Vercel 接入边界](#vercel-接入的当前边界)。`--allow-hobby` 表示用户接受个人非商业用途限制，不因选择默认平台而自动接受。省略 `--allow-publish` 创建只读关联；权限可通过 `authorize NAME --allow-publish=false` 等明确参数变更，正在运行的操作不会被这条命令隐式中止。
+
+### 选择 Railway
+
+已有 Railway 项目保持原平台，包括没有 `provider` 字段的旧记录。新关联需要显式选择 Railway，并通过其官方 CLI 登录：
+
+```sh
+env -u RAILWAY_TOKEN -u RAILWAY_API_TOKEN ./tools/node_modules/.bin/railway login
+./bin/ship register --provider railway \
   --name demo --source /path/to/your/project --url https://your-app.example \
   --workspace WORKSPACE_ID --railway-project PROJECT_ID \
   --service SERVICE_ID --environment ENVIRONMENT_ID \
@@ -63,9 +81,9 @@ env -u NEON_API_KEY -u NEON_PROFILE ./tools/node_modules/.bin/neon login \
   --allow-publish --allow-trial
 ```
 
-这些 ID 必须来自用户选择的实际资源，命令中的大写值只是占位符。登记会核对服务及环境归属、Neon 组织及端点，以及应用 `DATABASE_URL` 与端点的对应关系。省略 `--allow-publish` 创建只读关联；`--allow-trial` 表示明确接受当前试用条件。权限可通过 `authorize NAME --allow-publish=false` 等明确参数变更，正在运行的操作不会被这条命令隐式中止。
+Railway 登录保存在 `~/.railway/config.json`。此路径还会核对应用 `DATABASE_URL` 与 Neon 端点的对应关系；`--allow-trial` 表示明确接受当前试用条件。
 
-CLI 二进制位置可用 `--railway-bin`、`--neon-bin` 指定；首次登记成功后保存为本机设置。一个状态目录使用一组官方 CLI 登录上下文，需要隔离时使用另一个 `--state-dir`。
+CLI 二进制位置可用 `--vercel-bin`、`--railway-bin`、`--neon-bin` 指定；首次登记成功后保存为本机设置。一个状态目录使用一组官方 CLI 登录上下文，需要隔离时使用另一个 `--state-dir`。
 
 ## 让现有 Agent 使用
 

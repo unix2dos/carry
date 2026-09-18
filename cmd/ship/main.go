@@ -24,12 +24,14 @@ Global flags (before command):
   --vercel-config PATH   Existing private Vercel authentication directory
 
 Commands:
-  register --name NAME --source DIR --url HTTPS_ORIGIN [--provider railway|vercel]
-    --workspace ID --railway-project ID --service ID --environment ID
+  register --name NAME --source DIR --url HTTPS_ORIGIN [--provider vercel|railway]
+    --vercel-team ID --vercel-project ID
     --neon-org ID --neon-project ID --neon-endpoint ID
-    [--allow-publish] [--allow-trial]
-    Vercel: use --vercel-team ID --vercel-project ID instead of Railway IDs;
-            --allow-hobby accepts personal noncommercial use of the Hobby plan
+    [--allow-publish] [--allow-hobby]
+    Default: Vercel; --allow-hobby accepts personal noncommercial Hobby conditions
+    Railway: use --provider railway --workspace ID --railway-project ID
+             --service ID --environment ID instead of Vercel IDs; [--allow-trial]
+    Existing projects keep their bound provider for all subsequent operations
   list
   status NAME           Live read-only ownership, account plan and resource checks
   check NAME            GET /healthz and /readyz; no writes to business data
@@ -181,7 +183,7 @@ func run(ctx context.Context, args []string) error {
 	case "register":
 		f := flag.NewFlagSet("register", flag.ContinueOnError)
 		var p Project
-		f.StringVar(&p.Provider, "provider", "railway", "compute provider")
+		f.StringVar(&p.Provider, "provider", "vercel", "compute provider")
 		f.StringVar(&p.VercelTeam, "vercel-team", "", "Vercel team ID")
 		f.StringVar(&p.VercelProject, "vercel-project", "", "Vercel project ID")
 		f.BoolVar(&p.AllowHobby, "allow-hobby", false, "accept personal noncommercial Hobby conditions")
