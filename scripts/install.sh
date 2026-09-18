@@ -14,7 +14,7 @@ for tool in curl tar shasum node npm; do
 done
 node -e 'if (Number(process.versions.node.split(".")[0]) < 24) process.exit(1)' || fail 'Ship needs Node.js 24+; install it from https://nodejs.org/en/download'
 
-version=v0.1.0-alpha.1
+version=v0.1.0-alpha.2
 destination=${1:-"$HOME/.local/share/ship"}
 case "$destination" in /*) ;; *) fail 'INSTALL_DIRECTORY must be an absolute path.' ;; esac
 bin_link="$HOME/.local/bin/ship"

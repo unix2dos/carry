@@ -15,7 +15,7 @@ import (
 
 var version = "dev"
 
-const help = `ship — alpha, existing Railway or Vercel + Neon project bindings
+const help = `ship — alpha, existing Railway or Vercel projects with optional Neon
 
 Global flags (before command):
   --state-dir PATH       Private local records (default: ~/.ship; existing legacy state reused)
@@ -29,7 +29,7 @@ Commands:
   version               Print the installed CLI version (also: --version)
   register --name NAME --source DIR --url HTTPS_ORIGIN [--provider vercel|railway]
     --vercel-team ID --vercel-project ID
-    --neon-org ID --neon-project ID --neon-endpoint ID
+    [--neon-org ID --neon-project ID --neon-endpoint ID] (all three or none)
     [--allow-publish] [--allow-hobby]
     Default: Vercel; --allow-hobby accepts personal noncommercial Hobby conditions
     Railway: use --provider railway --workspace ID --railway-project ID
@@ -37,7 +37,7 @@ Commands:
     Existing projects keep their bound provider for all subsequent operations
   list
   status NAME           Live read-only ownership, account plan and resource checks
-  check NAME            GET /healthz and /readyz; no writes to business data
+  check NAME            GET /healthz; also /readyz when Neon is bound; no business writes
   logs NAME             Last 40 deployment log lines; known credentials redacted
   publish NAME [--detach]  Upload a captured source directory to the bound service
   reconcile NAME [--wait]  Find the existing operation by its deployment marker

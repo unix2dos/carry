@@ -91,11 +91,14 @@ func (e *Engine) syncVercelSecret(ctx context.Context, p Project, key string, ap
 				return empty, errors.New("reconcile the pending deployment before changing its Secrets")
 			}
 		}
+		if key == "DATABASE_URL" && !p.hasNeon() {
+			return empty, errors.New("DATABASE_URL updates require a registered Neon endpoint; existing provider configuration can be retained without one")
+		}
 		neon, host, err := e.Providers.inspectNeon(ctx, p)
 		if err != nil {
 			return empty, err
 		}
-		if neon.NeonPlan != "free" {
+		if p.hasNeon() && neon.NeonPlan != "free" {
 			return empty, errors.New("Secret writes require the validated Neon Free binding")
 		}
 		value, err := e.Store.secretValue(p.Name, last.Ref)

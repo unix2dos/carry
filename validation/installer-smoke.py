@@ -10,7 +10,7 @@ import tarfile
 import tempfile
 
 REPO = Path(__file__).resolve().parents[1]
-VERSION = 'v0.1.0-alpha.1'
+VERSION = 'v0.1.0-alpha.2'
 ASSET = f'ship-{VERSION}-darwin-arm64.tar.gz'
 
 

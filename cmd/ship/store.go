@@ -29,11 +29,15 @@ type Project struct {
 	RailwayProject string `json:"railway_project"`
 	Service        string `json:"railway_service"`
 	Environment    string `json:"railway_environment"`
-	NeonOrg        string `json:"neon_org"`
-	NeonProject    string `json:"neon_project"`
-	NeonEndpoint   string `json:"neon_endpoint"`
+	NeonOrg        string `json:"neon_org,omitempty"`
+	NeonProject    string `json:"neon_project,omitempty"`
+	NeonEndpoint   string `json:"neon_endpoint,omitempty"`
 	AllowPublish   bool   `json:"allow_publish"`
 	AllowTrial     bool   `json:"allow_trial"`
+}
+
+func (p Project) hasNeon() bool {
+	return p.NeonOrg != "" || p.NeonProject != "" || p.NeonEndpoint != ""
 }
 
 type Check struct {
@@ -53,10 +57,10 @@ type Observation struct {
 	ComputePlan     string    `json:"compute_plan,omitempty"`
 	DatabaseBinding string    `json:"database_binding,omitempty"`
 	RailwayPlan     string    `json:"railway_plan"`
-	NeonPlan        string    `json:"neon_plan"`
+	NeonPlan        string    `json:"neon_plan,omitempty"`
 	ServiceState    string    `json:"service_state"`
 	DeploymentID    string    `json:"deployment_id"`
-	DatabaseState   string    `json:"database_state"`
+	DatabaseState   string    `json:"database_state,omitempty"`
 	Eligible        bool      `json:"eligible"`
 	Reason          string    `json:"reason,omitempty"`
 }

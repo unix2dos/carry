@@ -308,3 +308,68 @@ func TestVercelSourceRejectsImplicitConfiguration(t *testing.T) {
 		t.Fatal("Other framework was accepted for a container deployment")
 	}
 }
+
+func TestVercelWithoutNeon(t *testing.T) {
+	f := newVercelFixture(t)
+	f.p.NeonOrg, f.p.NeonProject, f.p.NeonEndpoint = "", "", ""
+	if err := atomicJSON(filepath.Join(f.e.Store.Root, "projects", f.p.Name+".json"), f.p); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(f.e.Store.Root, "secrets", f.p.Name+".json")); err != nil {
+		t.Fatal(err)
+	}
+	original := f.e.Providers.RunInput
+	f.e.Providers.RunInput = func(ctx context.Context, tool string, args []string, input []byte) ([]byte, error) {
+		if tool == "neon" {
+			t.Fatal("application-only project contacted Neon")
+		}
+		if args[0] == "api" && strings.Contains(args[1], "/env") && input == nil {
+			return []byte(`{"envs":[]}`), nil
+		}
+		return original(ctx, tool, args, input)
+	}
+	ctx := context.Background()
+	f.plan = "pro"
+	pre, err := f.e.Providers.inspect(ctx, f.p)
+	if err != nil || pre.Observation.Eligible {
+		t.Fatal("omitting Neon bypassed Hobby restriction")
+	}
+	f.plan = "hobby"
+	op, unlock, err := f.e.begin(f.p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unlock()
+	if err = f.e.executePublish(ctx, f.p, op, false); err != nil || f.uploads != 1 || f.writes != 0 || op.State != "deploying" {
+		t.Fatalf("application without DATABASE_URL could not deploy: %v", err)
+	}
+	observation := f.e.Store.observation(f.p.Name)
+	if observation == nil || !observation.Eligible || observation.DatabaseBinding != "not_managed" || observation.NeonPlan != "" {
+		t.Fatal("application-only state claimed database ownership")
+	}
+	if _, err = f.e.logs(ctx, f.p); err != nil {
+		t.Fatalf("application-only logs require Neon: %v", err)
+	}
+}
+
+func TestVercelOrdinarySecretWithoutNeon(t *testing.T) {
+	f := newVercelFixture(t)
+	f.p.NeonOrg, f.p.NeonProject, f.p.NeonEndpoint = "", "", ""
+	f.env.Key = "API_TOKEN"
+	original := f.e.Providers.RunInput
+	f.e.Providers.RunInput = func(ctx context.Context, tool string, args []string, input []byte) ([]byte, error) {
+		if tool == "neon" {
+			t.Fatal("ordinary Secret on application-only project contacted Neon")
+		}
+		return original(ctx, tool, args, input)
+	}
+	if _, err := f.e.Store.saveSecret(f.p.Name, "API_TOKEN", []byte("standalone-secret")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.e.syncVercelSecret(context.Background(), f.p, "API_TOKEN", true); err != nil || f.writes != 1 {
+		t.Fatalf("ordinary Secret required a database: %v", err)
+	}
+	if _, err := f.e.syncVercelSecret(context.Background(), f.p, "DATABASE_URL", true); err == nil || f.writes != 1 {
+		t.Fatal("database configuration was rewritten without a verifiable binding")
+	}
+}

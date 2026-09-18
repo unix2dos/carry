@@ -205,6 +205,7 @@ func (v *Providers) inspectVercel(ctx context.Context, p Project) (preflight, er
 	}
 	result.Observation.NeonPlan = neon.NeonPlan
 	result.Observation.DatabaseState = neon.DatabaseState
+	result.Observation.DatabaseBinding = neon.DatabaseBinding
 	if plan != "hobby" {
 		result.Observation.Reason = "此 Vercel 路径只支持已核对的 Hobby，停止付费或未知计划的发布"
 		return result, nil
@@ -213,7 +214,7 @@ func (v *Providers) inspectVercel(ctx context.Context, p Project) (preflight, er
 		result.Observation.Reason = "需要明确接受 Hobby 个人非商业用途条件"
 		return result, nil
 	}
-	if neon.NeonPlan != "free" {
+	if p.hasNeon() && neon.NeonPlan != "free" {
 		result.Observation.Reason = "数据库组织不是已验证的 Free 计划"
 		return result, nil
 	}
@@ -222,18 +223,20 @@ func (v *Providers) inspectVercel(ctx context.Context, p Project) (preflight, er
 		result.Observation.Reason = err.Error()
 		return result, nil
 	}
-	databaseURL, configured := vars["DATABASE_URL"]
-	if !configured {
-		result.Observation.Reason = "Vercel production 未配置 DATABASE_URL"
-		return result, nil
-	}
-	if databaseURL != "" && !databaseEndpointMatches(databaseURL, host) {
-		result.Observation.Reason = "本地保存的 DATABASE_URL 与登记的 Neon 连接端点不匹配"
-		return result, nil
-	}
-	result.Observation.DatabaseBinding = "provider_secret_retained_not_readable"
-	if databaseURL != "" {
-		result.Observation.DatabaseBinding = "last_write_and_metadata_match_not_runtime_identity"
+	if p.hasNeon() {
+		databaseURL, configured := vars["DATABASE_URL"]
+		if !configured {
+			result.Observation.Reason = "Vercel production 未配置 DATABASE_URL"
+			return result, nil
+		}
+		if databaseURL != "" && !databaseEndpointMatches(databaseURL, host) {
+			result.Observation.Reason = "本地保存的 DATABASE_URL 与登记的 Neon 连接端点不匹配"
+			return result, nil
+		}
+		result.Observation.DatabaseBinding = "provider_secret_retained_not_readable"
+		if databaseURL != "" {
+			result.Observation.DatabaseBinding = "last_write_and_metadata_match_not_runtime_identity"
+		}
 	}
 	result.Secrets = secretValues(vars)
 	result.Observation.Eligible = true

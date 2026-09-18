@@ -6,11 +6,11 @@ Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 
 **当前为 Alpha。** 已验证 Railway Trial + Neon Free，以及个人非商业用途的 Vercel Hobby + Neon Free HTTP 容器路径。正式 Railway Free 和付费账号的发布路径尚未验收，程序会停止这些账号的发布操作。软件采用 MIT 开源；云资源的费用与用途限制取决于供应商套餐。
 
-新项目默认使用 **Vercel + Neon**；选择 Railway 时登记需指定 `--provider railway`。后续发布沿用项目已保存的平台绑定，已有 Railway 项目保持原平台。
+新项目默认使用 **Vercel**，Neon 数据库按需关联；选择 Railway 时登记需指定 `--provider railway`。后续发布沿用项目已保存的平台绑定，已有 Railway 项目保持原平台。
 
 ## 已实现
 
-- 关联已有 Railway 或 Vercel 项目与 Neon PostgreSQL，核对资源归属和费用条件；数据库连接目标的可核验范围单独显示。
+- 关联已有 Railway 或 Vercel 项目，按需关联 Neon PostgreSQL，核对资源归属和费用条件；数据库连接目标的可核验范围单独显示。
 - 从 Dockerfile 项目发布源码，查看状态、日志和应用访问检查。
 - 保存本地操作记录，中断后核对原部署；结果未知时阻止重复提交。
 - CLI、极简网页和配套 Skill 共用执行逻辑与状态。
@@ -24,7 +24,7 @@ Ship 在本地运行，让已有编码 Agent 通过 CLI 部署、检查和维护
 目前支持 **macOS Apple Silicon**，需要 Node.js 24+ 和 npm。CLI 使用预编译包，无需 Go 或 Git：
 
 ```sh
-curl -fsSL https://github.com/unix2dos/ship/releases/download/v0.1.0-alpha.1/install.sh | sh
+curl -fsSL https://github.com/unix2dos/ship/releases/download/v0.1.0-alpha.2/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ship --version
 ```
@@ -45,7 +45,7 @@ ship logs demo
 ship serve --open
 ```
 
-`demo` 是已经关联的项目名；第一次安装列表为空。源码需符合当前容器约定，且先有 Vercel / Railway 应用与 Neon 数据库。首次创建云资源尚未实现。
+`demo` 是已经关联的项目名；第一次安装列表为空。源码需符合当前容器约定，且先有 Vercel / Railway 应用。无需数据库的应用不用 Neon 账号；只有关联 Neon 时才核验数据库。首次创建云资源尚未实现。
 
 网页只监听本机 `127.0.0.1`。完整启动地址含本地会话密钥，请勿分享。发布前程序会重新检查资源归属和费用条件，平台部署结果与应用访问结果分别记录。
 

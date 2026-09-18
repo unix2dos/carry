@@ -37,8 +37,7 @@ func TestRegistrationProviderSelection(t *testing.T) {
 				"--name", "demo", "--source", t.TempDir(), "--url", "https://demo.example.test",
 				"--vercel-team", "team_demo", "--vercel-project", "prj_demo",
 				"--workspace", "workspace-demo", "--railway-project", "project-demo",
-				"--service", "service-demo", "--environment", "environment-demo",
-				"--neon-org", "org-demo", "--neon-project", "neon-demo", "--neon-endpoint", "ep-demo1"}
+				"--service", "service-demo", "--environment", "environment-demo"}
 			if tc.provider != "" {
 				args = append(args, "--provider", tc.provider)
 			}
@@ -304,7 +303,7 @@ func TestCredentialRedactionAndNoRedirect(t *testing.T) {
 	defer target.Close()
 	origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, target.URL, 302) }))
 	defer origin.Close()
-	checks := checkApplication(context.Background(), origin.URL)
+	checks := checkApplication(context.Background(), Project{URL: origin.URL})
 	if targetCalls != 0 || checks[0].OK || checks[0].HTTP != 302 {
 		t.Fatal("application check followed a redirect")
 	}
@@ -431,5 +430,101 @@ func TestLegacyToolEnvironment(t *testing.T) {
 	t.Setenv("SHIP_RAILWAY_BIN", "/ship/railway")
 	if resolve("") != "/ship/railway" || resolve("/explicit/railway") != "/explicit/railway" {
 		t.Fatal("tool override priority changed")
+	}
+}
+
+func TestOptionalNeonBinding(t *testing.T) {
+	e, original := fixture(t)
+	for mask := 0; mask < 8; mask++ {
+		p := original
+		if mask&1 == 0 {
+			p.NeonOrg = ""
+		}
+		if mask&2 == 0 {
+			p.NeonProject = ""
+		}
+		if mask&4 == 0 {
+			p.NeonEndpoint = ""
+		}
+		err := validateReferences(&p)
+		if (err == nil) != (mask == 0 || mask == 7) {
+			t.Fatalf("partial database binding %d: %v", mask, err)
+		}
+		if mask == 0 {
+			if err = e.Store.register(p); err != nil {
+				t.Fatal(err)
+			}
+			reopened, err := e.Store.project(p.Name)
+			if err != nil || reopened.hasNeon() {
+				t.Fatalf("application-only binding did not survive reopen: %v", err)
+			}
+		}
+	}
+}
+
+func TestChecksOnlyRequireReadinessForNeon(t *testing.T) {
+	requests := []string{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.URL.Path)
+		w.Write([]byte(`{"version":"test"}`))
+	}))
+	defer server.Close()
+	e, p := fixture(t)
+	p.URL = server.URL
+	p.NeonOrg, p.NeonProject, p.NeonEndpoint = "", "", ""
+	checks, err := e.check(context.Background(), p)
+	if err != nil || len(checks.Results) != 1 || !checks.Results[0].OK || strings.Join(requests, ",") != "/healthz" {
+		t.Fatalf("application-only checks required a database: %+v / %v", checks, err)
+	}
+	_, p = fixture(t)
+	p.URL = server.URL
+	checks, err = e.check(context.Background(), p)
+	if err != nil || len(checks.Results) != 2 || strings.Join(requests, ",") != "/healthz,/healthz,/readyz" {
+		t.Fatalf("bound database readiness was skipped: %+v / %v", checks, err)
+	}
+}
+
+func TestRailwayWithoutNeon(t *testing.T) {
+	e, p := fixture(t)
+	p.NeonOrg, p.NeonProject, p.NeonEndpoint = "", "", ""
+	marker, uploads := "", 0
+	e.Providers.Run = func(_ context.Context, tool string, args []string) ([]byte, error) {
+		if tool == "neon" {
+			t.Fatal("application-only project contacted Neon")
+		}
+		switch args[0] {
+		case "variable":
+			return []byte(`{"API_TOKEN":"standalone-secret"}`), nil
+		case "up":
+			marker = args[len(args)-1]
+			uploads++
+			return []byte(`{}`), nil
+		case "deployment":
+			return jsonBytes([]any{map[string]any{"id": "standalone-deployment", "status": "BUILDING", "meta": map[string]string{"cliMessage": marker}}}), nil
+		case "logs":
+			return []byte("standalone-secret"), nil
+		}
+		return healthyProvider(tool, args)
+	}
+	op, unlock, err := e.begin(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unlock()
+	if err = e.executePublish(context.Background(), p, op, false); err != nil || uploads != 1 || op.State != "deploying" {
+		t.Fatalf("application-only publish failed: %v / %d / %s", err, uploads, op.State)
+	}
+	observation := e.Store.observation(p.Name)
+	if observation == nil || !observation.Eligible || observation.DatabaseBinding != "not_managed" || observation.NeonPlan != "" {
+		t.Fatal("application-only state claimed database ownership")
+	}
+	lines, err := e.logs(context.Background(), p)
+	if err != nil || len(lines) != 1 || lines[0] != "[REDACTED]" {
+		t.Fatalf("non-database secret was exposed: %v", err)
+	}
+	p.AllowTrial = false
+	pre, err := e.Providers.inspect(context.Background(), p)
+	if err != nil || pre.Observation.Eligible {
+		t.Fatal("omitting Neon bypassed compute-plan authorization")
 	}
 }

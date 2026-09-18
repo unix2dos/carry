@@ -283,6 +283,7 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 	neon, host, err := v.inspectNeon(ctx, p)
 	result.Observation.NeonPlan = neon.NeonPlan
 	result.Observation.DatabaseState = neon.DatabaseState
+	result.Observation.DatabaseBinding = neon.DatabaseBinding
 	if err != nil {
 		return result, err
 	}
@@ -290,19 +291,12 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 	if err != nil {
 		return result, err
 	}
-	dsn, err := url.Parse(vars["DATABASE_URL"])
-	if err != nil || (dsn.Scheme != "postgres" && dsn.Scheme != "postgresql") {
-		return result, errors.New("DATABASE_URL is missing or invalid; alpha supports the validated PostgreSQL contract")
+	if p.hasNeon() {
+		if !databaseEndpointMatches(vars["DATABASE_URL"], host) {
+			return result, errors.New("application DATABASE_URL is missing or does not match the registered Neon endpoint")
+		}
+		result.Observation.DatabaseBinding = "provider_value_matches_endpoint"
 	}
-	parts := strings.SplitN(host, ".", 2)
-	pooler := ""
-	if len(parts) == 2 {
-		pooler = parts[0] + "-pooler." + parts[1]
-	}
-	if dsn.Hostname() != host && dsn.Hostname() != pooler {
-		return result, errors.New("application DATABASE_URL does not match the registered Neon endpoint")
-	}
-	result.Observation.DatabaseBinding = "provider_value_matches_endpoint"
 	result.Secrets = secretValues(vars)
 	switch {
 	case *c.Subscribed || string(c.Payment) != "null":
@@ -313,7 +307,7 @@ func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
 		result.Observation.Reason = "该项目尚未明确接受 Trial 试用条件"
 	case *c.Credit <= 0:
 		result.Observation.Reason = "Trial 额度不足，停止发布"
-	case result.Observation.NeonPlan != "free":
+	case p.hasNeon() && result.Observation.NeonPlan != "free":
 		result.Observation.Reason = "数据库组织不是已验证的 Free 计划"
 	default:
 		result.Observation.Eligible = true
@@ -374,12 +368,16 @@ func (v *Providers) logs(ctx context.Context, p Project) ([]string, error) {
 	}
 	return result, nil
 }
-func checkApplication(ctx context.Context, base string) []Check {
+func checkApplication(ctx context.Context, p Project) []Check {
 	client := http.Client{Timeout: 15 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	results := []Check{}
-	for _, path := range []string{"/healthz", "/readyz"} {
+	paths := []string{"/healthz"}
+	if p.hasNeon() {
+		paths = append(paths, "/readyz")
+	}
+	for _, path := range paths {
 		c := Check{Path: path}
-		req, err := http.NewRequestWithContext(ctx, "GET", base+path, nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", p.URL+path, nil)
 		if err != nil {
 			c.Error = "invalid application URL"
 			results = append(results, c)
@@ -410,7 +408,10 @@ func checkApplication(ctx context.Context, base string) []Check {
 }
 
 func (v *Providers) inspectNeon(ctx context.Context, p Project) (Observation, string, error) {
-	observation := Observation{NeonPlan: "Unknown"}
+	if !p.hasNeon() {
+		return Observation{DatabaseBinding: "not_managed"}, "", nil
+	}
+	observation := Observation{NeonPlan: "Unknown", DatabaseBinding: "unverified"}
 	var project struct {
 		Project struct {
 			ID    string `json:"id"`

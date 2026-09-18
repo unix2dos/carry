@@ -34,20 +34,18 @@ go build -buildvcs=false -o bin/ship ./cmd/ship
 
 ## 登录与关联已有项目
 
-新项目默认使用 Vercel + Neon，后续发布沿用项目已保存的平台绑定。先通过供应商官方 CLI 完成用户自己的登录授权。沿用现有登录无需重复操作；默认安装的首次登录命令如下；自定义安装时替换供应商工具的目录：
+新项目默认使用 Vercel；Neon 按需关联，后续发布沿用项目已保存的平台绑定。先通过供应商官方 CLI 完成用户自己的登录授权。沿用现有登录无需重复操作；默认安装的首次登录命令如下；自定义安装时替换供应商工具的目录：
 
 ```sh
 mkdir -p "$HOME/.config/ship-vercel"
 chmod 700 "$HOME/.config/ship-vercel"
 env -u VERCEL_TOKEN -u VERCEL_ORG_ID -u VERCEL_PROJECT_ID \
   "$HOME/.local/share/ship/tools/node_modules/.bin/vercel" login --global-config "$HOME/.config/ship-vercel"
-env -u NEON_API_KEY -u NEON_PROFILE "$HOME/.local/share/ship/tools/node_modules/.bin/neon" login \
-  --config-dir "$HOME/.config/neon" --no-analytics
 ```
 
 浏览器中选择自己的账号，密钥留在官方 CLI 的上述目录中。已有登录位于其他目录时，登记项目使用 `--vercel-config`、`--neon-config` 指向它。源码直接构建时，官方 CLI 路径为 `validation/cloud-tools/node_modules/.bin/`。
 
-当前需先有 Railway 服务或 Vercel 项目、Neon PostgreSQL 和可用应用地址。可让现有 Agent 从用户选定的账号查询资源 ID，再调用下方登记命令；界面尚未提供自动创建资源或账号选择器。内部版不会启用付费。
+当前需先有 Railway 服务或 Vercel 项目及可用应用地址。数据库可选：不关联 Neon 时无需 Neon 登录、数据库或 `DATABASE_URL`，Ship 只管理应用。可让现有 Agent 从用户选定的账号查询资源 ID，再调用下方登记命令；界面尚未提供自动创建资源或账号选择器。内部版不会启用付费。
 
 新安装默认将资源标识、源码路径和工具路径保存到 `~/.ship`；已有用户按上文规则沿用旧目录或显式迁移。macOS/Linux 文件权限为 0600，目录为 0700；普通项目记录不包含密钥值，业务密钥单独保存在 `secrets/项目名.json`。官方 CLI 的云账号令牌继续由官方工具管理。
 
@@ -55,11 +53,23 @@ env -u NEON_API_KEY -u NEON_PROFILE "$HOME/.local/share/ship/tools/node_modules/
 ship --vercel-config "$HOME/.config/ship-vercel" register \
   --name demo --source /path/to/your/project --url https://your-app.example \
   --vercel-team TEAM_ID --vercel-project PROJECT_ID \
-  --neon-org ORG_ID --neon-project NEON_PROJECT_ID --neon-endpoint ENDPOINT_ID \
   --allow-publish --allow-hobby
 ```
 
-这些 ID 必须来自用户选择的实际资源，命令中的大写值只是占位符。登记会核对资源归属、Neon 组织及端点；Vercel 隐藏的数据库连接地址仍明确标为未核验。源码需满足下文的 [Vercel 接入边界](#vercel-接入的当前边界)。`--allow-hobby` 表示用户接受个人非商业用途限制，不因选择默认平台而自动接受。省略 `--allow-publish` 创建只读关联；权限可通过 `authorize NAME --allow-publish=false` 等明确参数变更，正在运行的操作不会被这条命令隐式中止。
+这些 ID 必须来自用户选择的实际资源，命令中的大写值只是占位符。登记会核对应用资源归属；关联 Neon 时才核对数据库组织及端点。Vercel 隐藏的数据库连接地址仍明确标为未核验。源码需满足下文的 [Vercel 接入边界](#vercel-接入的当前边界)。`--allow-hobby` 表示用户接受个人非商业用途限制，不因选择默认平台而自动接受。省略 `--allow-publish` 创建只读关联；权限可通过 `authorize NAME --allow-publish=false` 等明确参数变更，正在运行的操作不会被这条命令隐式中止。
+
+### 按需关联 Neon
+
+如果应用需要 Neon，先通过其官方 CLI 登录：
+
+```sh
+env -u NEON_API_KEY -u NEON_PROFILE "$HOME/.local/share/ship/tools/node_modules/.bin/neon" login \
+  --config-dir "$HOME/.config/neon" --no-analytics
+```
+
+在首次 `register` 命令中额外填写 `--neon-org ORG_ID --neon-project NEON_PROJECT_ID --neon-endpoint ENDPOINT_ID`。三个参数必须全部填写或全部省略，防止只核验一半的数据库关联。没有关联时状态记录为 `not_managed`，不声称应用没有使用其他数据库；供应商已有变量仍会保留并参与可用范围内的脱敏。
+
+已有 Neon 关联继续沿用，不因升级而消失。安装包仍随附 Neon CLI，但使用无数据库项目不会调用它或要求注册 Neon 账号。
 
 ### 选择 Railway
 
@@ -71,11 +81,10 @@ ship register --provider railway \
   --name demo --source /path/to/your/project --url https://your-app.example \
   --workspace WORKSPACE_ID --railway-project PROJECT_ID \
   --service SERVICE_ID --environment ENVIRONMENT_ID \
-  --neon-org ORG_ID --neon-project NEON_PROJECT_ID --neon-endpoint ENDPOINT_ID \
   --allow-publish --allow-trial
 ```
 
-Railway 登录保存在 `~/.railway/config.json`。此路径还会核对应用 `DATABASE_URL` 与 Neon 端点的对应关系；`--allow-trial` 表示明确接受当前试用条件。
+Railway 登录保存在 `~/.railway/config.json`。关联 Neon 时，此路径还会核对应用 `DATABASE_URL` 与 Neon 端点的对应关系；`--allow-trial` 表示明确接受当前试用条件。
 
 CLI 二进制位置可用 `--vercel-bin`、`--railway-bin`、`--neon-bin` 指定；首次登记成功后保存为本机设置。一个状态目录使用一组官方 CLI 登录上下文，需要隔离时使用另一个 `--state-dir`。
 
@@ -95,7 +104,7 @@ ship reconcile demo --wait
 ship history demo
 ```
 
-`status` 查询供应商管理接口，不主动访问应用；`check` 会访问 `/healthz` 与 `/readyz`，可能唤醒休眠实例。内部版采用已验证的这两个公开检查路径，不对业务数据发起写操作。发布后的服务状态与 HTTP 检查分别记录，网络超时不会被改写成供应商部署失败。
+`status` 查询供应商管理接口，不主动访问应用；`check` 默认只访问 `/healthz`，关联 Neon 后再检查 `/readyz`，可能唤醒休眠实例。应用应通过对应的公开接口报告状态，不对业务数据发起写操作。发布后的服务状态与 HTTP 检查分别记录，网络超时不会被改写成供应商部署失败。
 
 网页默认显示已有项目、访问地址、真实状态和三个常用入口，资源详情与日志按需展开。页面只轮询本地操作记录，云端查询由显式刷新或有界的发布观察触发。
 
@@ -114,7 +123,7 @@ ship secret check demo
 
 原实验版只保存钥匙串引用的记录，需要先迁移密钥值。迁移应保留引用 ID、时间、云端元数据与 `unknown` 状态，不以迁移触发云端写入。旧记录缺少本地值时明确报错，不能按空值继续。用户本机的本轮迁移与验证单独记录。
 
-Vercel `secret apply NAME KEY` / `secret reconcile NAME KEY` 是独立的配置操作。创建和更新请求契约已用临时合成变量验证；业务 Secret 没有重写，端到端普通发布不依赖这两个命令。`apply` 是明确的云端配置写入；`reconcile` 只核对上次标记。未知写入继续保留，不自动重发。存储方式变更不取消这条边界。参见 [当前接入问题](../validation/VERCEL-RESULTS.md)。
+Vercel `secret apply NAME KEY` / `secret reconcile NAME KEY` 是独立的配置操作。普通业务 Secret 可用于未关联 Neon 的应用。通过 Ship 写入 `DATABASE_URL` 仍需已关联的 Neon 端点以核对目标；其他数据库的连接配置可继续由供应商管理。创建和更新请求契约已用临时合成变量验证；业务 Secret 没有重写，端到端普通发布不依赖这两个命令。`apply` 是明确的云端配置写入；`reconcile` 只核对上次标记。未知写入继续保留，不自动重发。存储方式变更不取消这条边界。参见 [当前接入问题](../validation/VERCEL-RESULTS.md)。
 
 已保存的值参与源码检查和日志遮蔽；本地文件不可读取时停止依赖它的操作。通用规则和已知值匹配不能发现所有形式的硬编码秘密或日志泄露。运行 Ship 不再需要 macOS 钥匙串或 cgo。当前安装器仍只验收 macOS arm64；Windows 的访问控制和文件锁尚未适配，不能把移除钥匙串依赖视为 Windows 已可用。
 
@@ -130,7 +139,7 @@ Vercel `secret apply NAME KEY` / `secret reconcile NAME KEY` 是独立的配置�
 
 ## Vercel 接入的当前边界
 
-本版已用 Ship CLI 验收已有 Vercel Hobby 项目与 Neon Free 的发布、更新、读写与数据保留。使用已登录的官方 CLI，通过 `--vercel-config` 指定认证目录，登记时指定 `--provider vercel --vercel-team TEAM_ID --vercel-project PROJECT_ID --allow-hobby`，并提供已有应用 URL 与 Neon 标识。`--allow-hobby` 表示用户接受个人非商业用途限制，不代表所有应用都适用。源码目前要求 `Dockerfile.vercel` 和仅含 `{"framework":"container"}` 的 `vercel.json`。
+本版已用 Ship CLI 验收已有 Vercel Hobby 项目与 Neon Free 的发布、更新、读写与数据保留。使用已登录的官方 CLI，通过 `--vercel-config` 指定认证目录，登记时指定 `--provider vercel --vercel-team TEAM_ID --vercel-project PROJECT_ID --allow-hobby`，并提供已有应用 URL；Neon 标识仅在需要关联数据库时提供。`--allow-hobby` 表示用户接受个人非商业用途限制，不代表所有应用都适用。源码目前要求 `Dockerfile.vercel` 和仅含 `{"framework":"container"}` 的 `vercel.json`。
 
 普通源码发布沿用平台上已有的 Secret，不强制读回、缓存或重写密钥。数据库地址不可读或本地副本已过期时，明确显示“连接目标未核验”；账号归属、套餐条件与变量存在性仍会检查。只有用户明确请求配置变更时才调用 `secret apply`。真正未知的写入仍会阻止后续发布，不能通过删除缓存绕过。
 
@@ -140,7 +149,7 @@ Vercel `secret apply NAME KEY` / `secret reconcile NAME KEY` 是独立的配置�
 
 ## 费用与范围
 
-Railway 路径要求明确接受 Trial、无付费订阅或默认支付方式、Trial 额度大于零。Vercel 路径要求当前账号为 Hobby，且用户明确接受个人非商业用途条件。两者都要求登记的 Neon 组织为 Free。其他计费状态停止发布；不把 Railway Trial 结果当成正式 Free：[费用边界](research/2026-09-16-free-plan-boundaries.md)。
+Railway 路径要求明确接受 Trial、无付费订阅或默认支付方式、Trial 额度大于零。Vercel 路径要求当前账号为 Hobby，且用户明确接受个人非商业用途条件。选择关联 Neon 时，才要求该组织为 Free；未关联数据库不会跳过计算平台的费用与归属核验。其他计费状态停止发布；不把 Railway Trial 结果当成正式 Free：[费用边界](research/2026-09-16-free-plan-boundaries.md)。
 
 本版不承担首次创建项目/数据库、自动付费、资源删除、数据库迁移或通用资源接管；云配置写入仅限明确授权的 Vercel Secret 操作。它也没有实现无人值守运维。`PORT` 的早期差异仍未解决，常规发布结果按实际部署和检查验收。
 
@@ -158,4 +167,4 @@ python3 validation/install-smoke.py "$HOME/.local/share/ship"
 
 ## 构建发布包
 
-维护者在源码目录运行 `sh scripts/package.sh v0.1.0-alpha.1`，生成带版本号的 macOS arm64 包、SHA-256 校验文件和安装脚本。打包清单仅包含二进制、文档、Skill、依赖清单与许可证；发布包不包含本机状态或云凭证。生成后单独发布到对应 GitHub Release。
+维护者在源码目录运行 `sh scripts/package.sh v0.1.0-alpha.2`，生成带版本号的 macOS arm64 包、SHA-256 校验文件和安装脚本。打包清单仅包含二进制、文档、Skill、依赖清单与许可证；发布包不包含本机状态或云凭证。生成后单独发布到对应 GitHub Release。

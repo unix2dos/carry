@@ -1,6 +1,6 @@
 # 开始使用 Ship
 
-Ship 让你的编码 Agent 部署、检查和维护你自己云账号中的应用，也提供本地网页。新项目默认使用 **Vercel + Neon**。
+Ship 让你的编码 Agent 部署、检查和维护你自己云账号中的应用，也提供本地网页。新项目默认使用 **Vercel**；数据库按需选择，不使用数据库就不需要 Neon 账号。
 
 ## 1. 安装 CLI 和 Skill
 
@@ -9,12 +9,12 @@ Ship 让你的编码 Agent 部署、检查和维护你自己云账号中的应�
 在终端执行：
 
 ```sh
-curl -fsSL https://github.com/unix2dos/ship/releases/download/v0.1.0-alpha.1/install.sh | sh
+curl -fsSL https://github.com/unix2dos/ship/releases/download/v0.1.0-alpha.2/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ship --version
 ```
 
-安装成功会显示 `ship v0.1.0-alpha.1`。安装器会：
+安装成功会显示 `ship v0.1.0-alpha.2`。安装器会：
 
 - 下载预编译 CLI，核对 SHA-256，再安装固定版本的供应商工具。
 - 提供 `~/.local/bin/ship`，并自动配置 zsh / bash 的 PATH。上面的 `export` 让当前终端立即生效，新终端无需再执行。
@@ -28,11 +28,11 @@ ship --version
 
 把下面这段和你的应用源码目录、现有访问地址一起发给它：
 
-> 使用 Ship，帮我登录自己的 Vercel 和 Neon 账号，关联这个已有应用，命名为 demo。先核对账号、套餐和应用状态，再帮我完成一次部署。沿用已有数据库和 Secret；登录授权需要我操作时告诉我。
+> 使用 Ship，帮我登录自己的 Vercel 账号，关联这个已有应用，命名为 demo。先核对账号、套餐和应用状态，再帮我完成一次部署。只有应用需要时才关联 Neon，沿用已有 Secret；登录授权需要我操作时告诉我。
 
 Agent 会按 Skill 调用本机 CLI，并引导你完成官方登录。凭证留在本机，不需要粘贴到聊天中。Hobby 的个人非商业用途条件与发布授权会在关联时说明。
 
-**当前 Alpha 的边界：**你需要已有的 Vercel Hobby 应用和 Neon Free 数据库，且有可用访问地址。源码需包含 `Dockerfile.vercel`、内容为 `{"framework":"container"}` 的 `vercel.json`，以及 `/healthz`、`/readyz` 检查接口。首次创建云资源尚未实现；只有代码、还没有云资源时，Agent 应说明这个缺口。Windows 和 Intel Mac 安装包尚未发布。
+**当前 Alpha 的边界：**你需要已有的 Vercel Hobby 应用和可用访问地址。Neon 数据库是可选项；不关联时无需登录 Neon，也不要求配置 `DATABASE_URL`。源码需包含 `Dockerfile.vercel`、内容为 `{"framework":"container"}` 的 `vercel.json`，以及 `/healthz` 检查接口。关联 Neon 后才额外要求 `/readyz`；登记时三个 Neon 标识必须一起填写，或全部省略。首次创建云资源尚未实现；只有代码、还没有云资源时，Agent 应说明这个缺口。Windows 和 Intel Mac 安装包尚未发布。
 
 ## 3. 日常使用
 

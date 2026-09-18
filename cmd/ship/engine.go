@@ -24,7 +24,13 @@ func validateReferences(p *Project) error {
 	if !slugPattern.MatchString(p.Name) {
 		return errors.New("name must use lowercase letters, digits and hyphens")
 	}
-	ids := []string{p.NeonOrg, p.NeonProject, p.NeonEndpoint}
+	var ids []string
+	if p.hasNeon() {
+		if p.NeonOrg == "" || p.NeonProject == "" || p.NeonEndpoint == "" {
+			return errors.New("provide all three Neon IDs or omit all three for an application-only binding")
+		}
+		ids = append(ids, p.NeonOrg, p.NeonProject, p.NeonEndpoint)
+	}
 	switch p.Provider {
 	case "", "railway":
 		ids = append(ids, p.Workspace, p.RailwayProject, p.Service, p.Environment)
@@ -87,7 +93,7 @@ func (e *Engine) refresh(ctx context.Context, p Project) (Observation, error) {
 	return f.Observation, err
 }
 func (e *Engine) check(ctx context.Context, p Project) (ApplicationChecks, error) {
-	c := ApplicationChecks{At: time.Now().UTC(), Results: checkApplication(ctx, p.URL)}
+	c := ApplicationChecks{At: time.Now().UTC(), Results: checkApplication(ctx, p)}
 	return c, e.Store.saveChecks(p.Name, c)
 }
 
