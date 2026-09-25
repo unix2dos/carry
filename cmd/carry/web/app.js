@@ -16,20 +16,20 @@ function time(value){return value?new Date(value).toLocaleString():'尚未检查
 function showDialog(title,text,opener=document.activeElement){dialogOpener=opener;$('dialog-title').textContent=title;const pre=document.createElement('pre');pre.textContent=text;$('dialog-body').replaceChildren(pre);$('dialog').showModal();}
 $('close').addEventListener('click',()=>$('dialog').close());
 $('dialog').addEventListener('close',()=>{if(dialogOpener?.isConnected)dialogOpener.focus();load().catch(e=>message(e.message,true));});
-$('add').addEventListener('click',()=>showDialog('关联已有应用','先关联已有 Vercel 或 Railway 应用。只有应用需要时才关联 Neon 数据库。\n\n在已有 Agent 中选择项目，让它使用安装好的 carry Skill，核对资源归属后运行 register。\n\n首次创建云资源、通用资源接管和数据库迁移尚未接入这一版。'));
+$('add').addEventListener('click',()=>showDialog('关联应用','可关联已有 Vercel / Railway 应用，或把 Web 项目绑定到一台已有 Docker 的 Linux VPS。只有应用需要时才关联 Neon 数据库。\n\n在已有 Agent 中选择项目，让它使用 Carry 核对目标后运行 register。数据库迁移尚未接入这一版。'));
 async function load(){
  const views=await api('projects');const fragment=document.createDocumentFragment();
  for(const view of views){
   const p=view.project,o=view.observation,op=view.operations[0];const pending=op&&!terminal.has(op.state);
   const card=$('card').content.cloneNode(true),article=card.querySelector('article');article.dataset.name=p.name;
   card.querySelector('.name').textContent=p.name;
-  const provider=p.provider==='vercel'?'Vercel':'Railway',hasNeon=!!(p.neon_org||p.neon_project||p.neon_endpoint);
+  const provider=p.provider==='vercel'?'Vercel':p.provider==='vps'?'VPS':'Railway',hasNeon=!!(p.neon_org||p.neon_project||p.neon_endpoint);
   card.querySelectorAll('[data-neon]').forEach(element=>element.hidden=!hasNeon);
   card.querySelector('.plan').textContent=o?provider+' '+(o.compute_plan||o.railway_plan||'待确认')+(hasNeon?' · Neon '+(o.neon_plan||'待确认'):''):'尚未读取资源状态';
   const status=card.querySelector('.status');
   const newerOperation=op?.provider_state&&(!o||new Date(op.updated_at)>new Date(o.at));
   const cloudState=newerOperation?op.provider_state:o?.service_state;
-  status.textContent=pending?(op.state==='unknown'?(view.running?'正在确认发布':'结果待核实'):'正在发布'):op?.state==='blocked'?'发布未执行':op?.state==='failed'?'最近发布失败':cloudState==='SLEEPING'?'最近状态：休眠':['SUCCESS','READY'].includes(cloudState)?'最近部署成功':'状态待刷新';
+  status.textContent=pending?(op.state==='unknown'?(view.running?'正在确认发布':'结果待核实'):'正在发布'):op?.state==='blocked'?'发布未执行':op?.state==='failed'?'最近发布失败':cloudState==='SLEEPING'?'最近状态：休眠':['SUCCESS','READY','ready','running'].includes(cloudState)?'最近部署成功':'状态待刷新';
   if(pending||!o||op?.state==='blocked')status.classList.add('warn');if(op?.state==='failed')status.classList.add('bad');
   card.querySelector('.address').textContent=p.url;card.querySelector('.visit').href=p.url;
   card.querySelector('[data-action="publish"]').disabled=!!pending||!p.allow_publish;
