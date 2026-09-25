@@ -38,7 +38,7 @@ Carry 是本地运行的部署与结果核对工具。用户已有的编码 Agen
 1. 只挂载可公开的示例 Markdown；不把作者私人笔记、主机目录或模型密钥放进镜像和网页响应。保留普通对话、工具轨迹与记录回看；Coding 练习不在首次公开范围。
 2. 匿名访客凭浏览器持有的标识只看和继续自己的任务；清除浏览器数据后无法找回旧任务。记录在持久目录保留 **7 天**，到期清理。访客隔离覆盖列表、详情、导出与继续对话。
 3. 共享的免费模型调用在服务端设全站与单访客上限；资源忙或额度耗尽时明确提示，不以新密钥、付费模型或自动重试绕过上限。
-4. 模型首选实测 Z.AI 官方列为免费的 `glm-4.7-flash`，验证实际账号资格、Chat Completions 工具调用、错误处理和额度边界后再上线。供应商条款允许 API 集成到面向终端用户的应用，也要求管理终端用户行为。[价格表](https://docs.z.ai/guides/overview/pricing) · [API 条款](https://chat.z.ai/legal-agreement/terms-of-service)
+4. 模型首发使用 Z.AI 官方列为免费的 `glm-4.5-flash`：2026-09-25 已用专用 Key 验证 Chat Completions 返回和一次函数工具调用；`glm-4.7-flash` 在同次验证中出现超时和供应商过载。仍须通过 Loop 完成工具回执链与额度边界验收。供应商条款允许 API 集成到面向终端用户的应用，也要求管理终端用户行为。[价格表](https://docs.z.ai/guides/overview/pricing) · [API 条款](https://chat.z.ai/legal-agreement/terms-of-service)
 5. 不把 OpenCode Zen 的 `muse-spark-1.3-contributor-free` 接给匿名公众：该免费项有期限，且 OpenCode 当前条款将服务限定为自己的内部使用。[免费项说明](https://opencode.ai/docs/zen/) · [使用条款](https://opencode.ai/legal/terms-of-service)
 6. 在 DMIT 上保留已有 xray / 3x-ui。只读预检见到 Debian 13、x86_64、2 vCPU、约 2 GiB 内存、约 35 GiB 剩余磁盘；8443 已占用，Docker 尚未安装。安装 Docker 前核对其网络规则影响，部署后复核原服务。`loop.liuvv.com` 在本次核查时尚无 DNS 记录；公网 80/443 可达性尚未由独立外部网络证明。
 

@@ -39,6 +39,7 @@ Commands:
          Save secrets separately with 'secret save NAME KEY --stdin'
     Existing projects keep their bound provider for all subsequent operations
   rebind NAME --source DIR  Change the bound source directory after verifying it
+  env NAME KEY VALUE     VPS only: change a non-secret application variable
   list
   status NAME           Live read-only ownership, account plan or VPS container checks
   check NAME            GET /healthz; also /readyz when Neon is bound; no business writes
@@ -282,6 +283,33 @@ func run(ctx context.Context, args []string) error {
 		return errors.New("registered project not found")
 	}
 	switch args[0] {
+	case "env":
+		if len(args) != 4 || p.Provider != "vps" || !validVPSEnv(map[string]string{args[2]: args[3]}) {
+			return errors.New("use env NAME NON_SECRET_KEY VALUE for a VPS binding")
+		}
+		unlock, err := store.lock(p.Name)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		ops, err := store.operations(p.Name)
+		if err != nil {
+			return err
+		}
+		for _, op := range ops {
+			if !op.terminal() {
+				return errors.New("reconcile the unfinished operation before changing environment")
+			}
+		}
+		if p.VPSEnv == nil {
+			p.VPSEnv = map[string]string{}
+		}
+		p.VPSEnv[args[2]] = args[3]
+		if err = atomicJSON(filepath.Join(store.Root, "projects", p.Name+".json"), p); err != nil {
+			return err
+		}
+		output(p.VPSEnv)
+		return nil
 	case "rebind":
 		f := flag.NewFlagSet("rebind", flag.ContinueOnError)
 		source := f.String("source", "", "new source directory")
