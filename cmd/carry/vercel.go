@@ -274,6 +274,9 @@ func (v *Providers) vercelDeployments(ctx context.Context, p Project) ([]Deploym
 }
 
 func (v *Providers) submit(ctx context.Context, p Project, stage, marker string) error {
+	if p.Provider == "vps" {
+		return v.submitVPS(ctx, p, stage, marker)
+	}
 	if p.Provider == "vercel" {
 		_, err := v.vercelCall(ctx, p, nil, "deploy", stage, "--project", p.VercelProject, "--prod", "--yes", "--json", "--no-wait", "--meta", "carry_operation="+marker)
 		return err

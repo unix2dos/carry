@@ -18,6 +18,8 @@ import (
 
 type Providers struct {
 	Railway      string
+	Docker       string
+	SSH          string
 	Neon         string
 	NeonConfig   string
 	Vercel       string
@@ -102,12 +104,21 @@ func (v *Providers) callInput(ctx context.Context, tool string, input []byte, ar
 	if tool == "vercel" {
 		bin = v.Vercel
 	}
+	if tool == "docker" {
+		bin = v.Docker
+	}
+	if tool == "ssh" {
+		bin = v.SSH
+	}
 	if bin == "" {
 		return nil, fmt.Errorf("%s CLI is not configured", tool)
 	}
 	timeout := 40 * time.Second
 	if len(args) > 0 && ((tool == "railway" && args[0] == "up") || (tool == "vercel" && args[0] == "deploy")) {
 		timeout = 120 * time.Second
+	}
+	if tool == "docker" {
+		timeout = 10 * time.Minute
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -172,6 +183,9 @@ type Deployment struct {
 }
 
 func (v *Providers) deployments(ctx context.Context, p Project) ([]Deployment, error) {
+	if p.Provider == "vps" {
+		return v.vpsDeployments(ctx, p)
+	}
 	if p.Provider == "vercel" {
 		return v.vercelDeployments(ctx, p)
 	}
@@ -206,6 +220,9 @@ type preflight struct {
 }
 
 func (v *Providers) inspect(ctx context.Context, p Project) (preflight, error) {
+	if p.Provider == "vps" {
+		return v.inspectVPS(ctx, p)
+	}
 	if p.Provider == "vercel" {
 		return v.inspectVercel(ctx, p)
 	}
@@ -346,6 +363,9 @@ func redact(s string, secrets []string) string {
 	return inlineSecret.ReplaceAllString(s, "[REDACTED]")
 }
 func (v *Providers) logs(ctx context.Context, p Project) ([]string, error) {
+	if p.Provider == "vps" {
+		return v.vpsLogs(ctx, p)
+	}
 	if p.Provider == "vercel" {
 		return v.vercelLogs(ctx, p)
 	}

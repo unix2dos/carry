@@ -18,22 +18,26 @@ var slugPattern = regexp.MustCompile(`^[a-z][a-z0-9-]{0,47}$`)
 var idPattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{7,99}$`)
 
 type Project struct {
-	Name           string `json:"name"`
-	Provider       string `json:"provider,omitempty"`
-	VercelTeam     string `json:"vercel_team,omitempty"`
-	VercelProject  string `json:"vercel_project,omitempty"`
-	AllowHobby     bool   `json:"allow_personal_noncommercial_hobby,omitempty"`
-	Source         string `json:"source"`
-	URL            string `json:"url"`
-	Workspace      string `json:"railway_workspace"`
-	RailwayProject string `json:"railway_project"`
-	Service        string `json:"railway_service"`
-	Environment    string `json:"railway_environment"`
-	NeonOrg        string `json:"neon_org,omitempty"`
-	NeonProject    string `json:"neon_project,omitempty"`
-	NeonEndpoint   string `json:"neon_endpoint,omitempty"`
-	AllowPublish   bool   `json:"allow_publish"`
-	AllowTrial     bool   `json:"allow_trial"`
+	Name           string            `json:"name"`
+	Provider       string            `json:"provider,omitempty"`
+	VercelTeam     string            `json:"vercel_team,omitempty"`
+	VercelProject  string            `json:"vercel_project,omitempty"`
+	AllowHobby     bool              `json:"allow_personal_noncommercial_hobby,omitempty"`
+	Source         string            `json:"source"`
+	URL            string            `json:"url"`
+	Workspace      string            `json:"railway_workspace,omitempty"`
+	RailwayProject string            `json:"railway_project,omitempty"`
+	Service        string            `json:"railway_service,omitempty"`
+	Environment    string            `json:"railway_environment,omitempty"`
+	NeonOrg        string            `json:"neon_org,omitempty"`
+	NeonProject    string            `json:"neon_project,omitempty"`
+	NeonEndpoint   string            `json:"neon_endpoint,omitempty"`
+	AllowPublish   bool              `json:"allow_publish"`
+	AllowTrial     bool              `json:"allow_trial"`
+	VPSHost        string            `json:"vps_host,omitempty"`
+	VPSPort        int               `json:"vps_port,omitempty"`
+	VPSDataPath    string            `json:"vps_data_path,omitempty"`
+	VPSEnv         map[string]string `json:"vps_env,omitempty"`
 }
 
 func (p Project) hasNeon() bool {
@@ -56,7 +60,7 @@ type Observation struct {
 	Provider        string    `json:"provider,omitempty"`
 	ComputePlan     string    `json:"compute_plan,omitempty"`
 	DatabaseBinding string    `json:"database_binding,omitempty"`
-	RailwayPlan     string    `json:"railway_plan"`
+	RailwayPlan     string    `json:"railway_plan,omitempty"`
 	NeonPlan        string    `json:"neon_plan,omitempty"`
 	ServiceState    string    `json:"service_state"`
 	DeploymentID    string    `json:"deployment_id"`
