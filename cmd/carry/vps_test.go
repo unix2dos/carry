@@ -165,7 +165,7 @@ func TestVPSRollbackRestoresEarlierImageWithoutRepeatingBuild(t *testing.T) {
 		t.Fatal(err)
 	}
 	marker := current.Marker
-	v := &Providers{Store: store, Run: func(_ context.Context, tool string, args []string) ([]byte, error) {
+	v := &Providers{Store: store, RunInput: func(_ context.Context, tool string, args []string, input []byte) ([]byte, error) {
 		if tool != "docker" || len(args) < 3 {
 			t.Fatal("unexpected rollback tool call")
 		}
@@ -180,8 +180,8 @@ func TestVPSRollbackRestoresEarlierImageWithoutRepeatingBuild(t *testing.T) {
 			}
 			return []byte("image-id"), nil
 		case "compose":
-			if len(args) < 5 {
-				t.Fatal("rollback Compose file was missing")
+			if len(args) < 5 || args[4] != "-" || len(input) == 0 {
+				t.Fatal("rollback Compose config was not streamed on stdin")
 			}
 			var config struct {
 				Services map[string]struct {
@@ -189,7 +189,7 @@ func TestVPSRollbackRestoresEarlierImageWithoutRepeatingBuild(t *testing.T) {
 					Labels map[string]string `json:"labels"`
 				} `json:"services"`
 			}
-			if json.Unmarshal(mustRead(t, args[4]), &config) != nil || config.Services["app"].Image != vpsImage(p, old.Marker) {
+			if json.Unmarshal(input, &config) != nil || config.Services["app"].Image != vpsImage(p, old.Marker) {
 				t.Fatal("rollback did not select the earlier application image")
 			}
 			marker = config.Services["app"].Labels["carry.marker"]
@@ -207,13 +207,4 @@ func TestVPSRollbackRestoresEarlierImageWithoutRepeatingBuild(t *testing.T) {
 	if err = e.rollbackVPS(context.Background(), p, op); err != nil || op.State != "deployed" || op.SourceHash != old.SourceHash || marker != op.Marker {
 		t.Fatalf("rollback did not reconcile the restored image: %v %#v", err, op)
 	}
-}
-
-func mustRead(t *testing.T, path string) []byte {
-	t.Helper()
-	b, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return b
 }

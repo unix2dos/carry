@@ -277,19 +277,6 @@ func (v *Providers) applyVPSCompose(ctx context.Context, p Project, image, marke
 	if err != nil {
 		return err
 	}
-	f, err := os.CreateTemp("", "carry-vps-compose-*.json")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(f.Name())
-	if _, err = f.Write(compose); err == nil {
-		err = f.Close()
-	} else {
-		f.Close()
-	}
-	if err != nil {
-		return errors.New("private VPS Compose file could not be prepared")
-	}
-	_, err = v.vpsCall(ctx, p, "compose", "-f", f.Name(), "-p", "carry-"+p.Name, "up", "-d", "--no-build", "--pull", "missing")
+	_, err = v.callInput(ctx, "docker", compose, "--host", "ssh://"+p.VPSHost, "compose", "-f", "-", "-p", "carry-"+p.Name, "up", "-d", "--no-build", "--pull", "missing")
 	return err
 }
