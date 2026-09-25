@@ -57,3 +57,5 @@ Carry 是本地运行的部署与结果核对工具。用户已有的编码 Agen
 - **其他主机与平台**：只有单机路径在 Loop 及至少一个外部开发者项目上可复现，并且现有工具仍留下明确痛点时，再扩展供应商、原生发布或团队权限。
 
 当前 Vercel、Railway、Neon Alpha 与其验证结论继续见 [Alpha 说明](docs/ALPHA.md)、[本地结果](validation/RESULTS.md)、[云端结果](validation/CLOUD-RESULTS.md)。它们不是上述 VPS 路径已经完成的证据。
+
+首个 VPS 项目的实际结果及剩余边界见 [Loop → DMIT 验收](validation/VPS-RESULTS.md)。
