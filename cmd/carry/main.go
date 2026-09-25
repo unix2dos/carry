@@ -15,7 +15,7 @@ import (
 
 var version = "dev"
 
-const help = `carry — alpha, existing Railway or Vercel projects with optional Neon
+const help = `carry — local deployment manager
 
 Global flags (before command):
   --state-dir PATH       Private local records (default: ~/.carry; existing legacy state reused)
@@ -27,19 +27,25 @@ Global flags (before command):
 
 Commands:
   version               Print the installed CLI version (also: --version)
-  register --name NAME --source DIR --url HTTPS_ORIGIN [--provider vercel|railway]
+  register --name NAME --source DIR --url HTTPS_ORIGIN [--provider vercel|railway|vps]
     --vercel-team ID --vercel-project ID
     [--neon-org ID --neon-project ID --neon-endpoint ID] (all three or none)
     [--allow-publish] [--allow-hobby]
     Default: Vercel; --allow-hobby accepts personal noncommercial Hobby conditions
     Railway: use --provider railway --workspace ID --railway-project ID
              --service ID --environment ID instead of Vercel IDs; [--allow-trial]
+    VPS: --provider vps --vps-host SSH_ALIAS --vps-port CONTAINER_PORT
+         [--vps-data-path ABSOLUTE_CONTAINER_PATH] [--vps-env KEY=VALUE]...
+         Save secrets separately with 'secret save NAME KEY --stdin'
     Existing projects keep their bound provider for all subsequent operations
+  rebind NAME --source DIR  Change the bound source directory after verifying it
+  env NAME KEY VALUE     VPS only: change a non-secret application variable
   list
-  status NAME           Live read-only ownership, account plan and resource checks
+  status NAME           Live read-only ownership, account plan or VPS container checks
   check NAME            GET /healthz; also /readyz when Neon is bound; no business writes
   logs NAME             Last 40 deployment log lines; known credentials redacted
-  publish NAME [--detach]  Upload a captured source directory to the bound service
+  publish NAME [--detach]  Publish captured source to the bound service or VPS
+  rollback NAME         VPS only: restore an earlier application image; keep data and current secrets
   reconcile NAME [--wait]  Find the existing operation by its deployment marker
   history NAME
   secret save NAME KEY --stdin  Save plaintext in an owner-only local file; no cloud changes
@@ -50,8 +56,9 @@ Commands:
   authorize NAME [--allow-publish=true|false] [--allow-trial=true|false]
   serve [--port 0] [--open]  Loopback-only local webpage with session authentication
 
-Official CLI login remains a user-owned prerequisite. This alpha does not create,
-delete or adopt whole cloud projects, change billing, or migrate databases.
+Official cloud CLI login remains a user-owned prerequisite. VPS publishing needs
+local Docker and an SSH-bound Docker Engine on the user's server. Carry does not
+create cloud accounts, purchase servers, change billing, or migrate databases.
 All non-server command outputs are JSON. Business secret values are stored separately
 in private local files and never printed. Official CLI login credentials stay with
 the official tools. Use one explicit project authorization for regular updates.
@@ -171,7 +178,7 @@ func run(ctx context.Context, args []string) error {
 	if settings.NeonConfig == "" {
 		settings.NeonConfig = filepath.Join(home, ".config", "neon")
 	}
-	providers := &Providers{Railway: resolveTool(settings.Railway, "railway", "@railway/cli/bin/railway", "CARRY_RAILWAY_BIN", "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN"), Neon: resolveTool(settings.Neon, "neon", ".bin/neon", "CARRY_NEON_BIN", "SHIP_NEON_BIN", "UPOK_NEON_BIN"), NeonConfig: settings.NeonConfig, Vercel: resolveTool(settings.Vercel, "vercel", ".bin/vercel", "CARRY_VERCEL_BIN", "SHIP_VERCEL_BIN", "UPOK_VERCEL_BIN"), VercelConfig: settings.VercelConfig, Store: store}
+	providers := &Providers{Railway: resolveTool(settings.Railway, "railway", "@railway/cli/bin/railway", "CARRY_RAILWAY_BIN", "SHIP_RAILWAY_BIN", "UPOK_RAILWAY_BIN"), Neon: resolveTool(settings.Neon, "neon", ".bin/neon", "CARRY_NEON_BIN", "SHIP_NEON_BIN", "UPOK_NEON_BIN"), NeonConfig: settings.NeonConfig, Vercel: resolveTool(settings.Vercel, "vercel", ".bin/vercel", "CARRY_VERCEL_BIN", "SHIP_VERCEL_BIN", "UPOK_VERCEL_BIN"), VercelConfig: settings.VercelConfig, Docker: resolveTool("", "docker", ""), SSH: resolveTool("", "ssh", ""), Store: store}
 	engine := &Engine{Store: store, Providers: providers}
 	switch args[0] {
 	case "secret":
@@ -190,6 +197,7 @@ func run(ctx context.Context, args []string) error {
 	case "register":
 		f := flag.NewFlagSet("register", flag.ContinueOnError)
 		var p Project
+		var vpsEnv envFlags
 		f.StringVar(&p.Provider, "provider", "vercel", "compute provider")
 		f.StringVar(&p.VercelTeam, "vercel-team", "", "Vercel team ID")
 		f.StringVar(&p.VercelProject, "vercel-project", "", "Vercel project ID")
@@ -206,6 +214,10 @@ func run(ctx context.Context, args []string) error {
 		f.StringVar(&p.NeonEndpoint, "neon-endpoint", "", "Neon endpoint")
 		f.BoolVar(&p.AllowPublish, "allow-publish", false, "authorize regular source updates to this exact service")
 		f.BoolVar(&p.AllowTrial, "allow-trial", false, "explicitly accept the current Trial account for internal testing")
+		f.StringVar(&p.VPSHost, "vps-host", "", "existing SSH host alias")
+		f.IntVar(&p.VPSPort, "vps-port", 0, "application container port")
+		f.StringVar(&p.VPSDataPath, "vps-data-path", "", "optional persistent container directory")
+		f.Var(&vpsEnv, "vps-env", "repeatable non-secret KEY=VALUE")
 		if err = f.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -215,11 +227,26 @@ func run(ctx context.Context, args []string) error {
 		if p.Source == "" {
 			return errors.New("source is required")
 		}
+		p.VPSEnv = vpsEnv
 		if err = validateProject(&p); err != nil {
 			return err
 		}
-		if _, err = providers.inspect(ctx, p); err != nil {
-			return err
+		if p.Provider == "vps" {
+			projects, e := store.projects()
+			if e != nil {
+				return e
+			}
+			// ponytail: one Carry app per VPS until a second real app justifies a shared HTTPS proxy.
+			for _, current := range projects {
+				if current.Provider == "vps" && current.VPSHost == p.VPSHost {
+					return errors.New("this VPS already has a Carry app; shared-domain routing is not supported yet")
+				}
+			}
+		}
+		if p.Provider != "vps" {
+			if _, err = providers.inspect(ctx, p); err != nil {
+				return err
+			}
 		}
 		if err = store.register(p); err != nil {
 			return err
@@ -256,6 +283,65 @@ func run(ctx context.Context, args []string) error {
 		return errors.New("registered project not found")
 	}
 	switch args[0] {
+	case "env":
+		if len(args) != 4 || p.Provider != "vps" || !validVPSEnv(map[string]string{args[2]: args[3]}) {
+			return errors.New("use env NAME NON_SECRET_KEY VALUE for a VPS binding")
+		}
+		unlock, err := store.lock(p.Name)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		ops, err := store.operations(p.Name)
+		if err != nil {
+			return err
+		}
+		for _, op := range ops {
+			if !op.terminal() {
+				return errors.New("reconcile the unfinished operation before changing environment")
+			}
+		}
+		if p.VPSEnv == nil {
+			p.VPSEnv = map[string]string{}
+		}
+		p.VPSEnv[args[2]] = args[3]
+		if err = atomicJSON(filepath.Join(store.Root, "projects", p.Name+".json"), p); err != nil {
+			return err
+		}
+		output(p.VPSEnv)
+		return nil
+	case "rebind":
+		f := flag.NewFlagSet("rebind", flag.ContinueOnError)
+		source := f.String("source", "", "new source directory")
+		if err = f.Parse(args[2:]); err != nil {
+			return err
+		}
+		if f.NArg() != 0 || *source == "" {
+			return errors.New("use rebind NAME --source DIR")
+		}
+		p.Source = *source
+		if err = validateProject(&p); err != nil {
+			return err
+		}
+		unlock, err := store.lock(p.Name)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		ops, err := store.operations(p.Name)
+		if err != nil {
+			return err
+		}
+		for _, op := range ops {
+			if !op.terminal() {
+				return errors.New("reconcile the unfinished operation before changing source")
+			}
+		}
+		if err = atomicJSON(filepath.Join(store.Root, "projects", p.Name+".json"), p); err != nil {
+			return err
+		}
+		output(p)
+		return nil
 	case "authorize":
 		f := flag.NewFlagSet("authorize", flag.ContinueOnError)
 		f.BoolVar(&p.AllowPublish, "allow-publish", p.AllowPublish, "authorization for future source updates to this exact service")
@@ -327,6 +413,21 @@ func run(ctx context.Context, args []string) error {
 		}
 		defer unlock()
 		err = engine.executePublish(ctx, p, op, wait)
+		output(op)
+		if err == nil {
+			err = operationError(op)
+		}
+		return err
+	case "rollback":
+		if len(args) != 2 {
+			return errors.New("use rollback NAME")
+		}
+		op, unlock, err := engine.begin(p)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		err = engine.rollbackVPS(ctx, p, op)
 		output(op)
 		if err == nil {
 			err = operationError(op)

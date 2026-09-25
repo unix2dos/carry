@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -224,6 +225,32 @@ func TestOwnershipMismatchAndSecretSafeSource(t *testing.T) {
 		t.Fatal("source symlink followed")
 	}
 }
+func TestBundledSourceKeepsPrivateRootAndReadableImageDirectories(t *testing.T) {
+	e, p := fixture(t)
+	nested := filepath.Join(p.Source, "web", "dist")
+	if err := os.MkdirAll(nested, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nested, "app.js"), []byte("ready"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	stage, _, _, err := bundleSource(p.Source, e.Store.Root, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(stage)
+	rootInfo, err := os.Stat(stage)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dirInfo, err := os.Stat(filepath.Join(stage, "web", "dist"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rootInfo.Mode().Perm() != 0700 || dirInfo.Mode().Perm()&0005 != 0005 {
+		t.Fatal("staging root must stay private while image directories allow non-root traversal")
+	}
+}
 func TestPrivateStateAndProjectLock(t *testing.T) {
 	e, p := fixture(t)
 	if err := validateProject(&p); err != nil {
@@ -404,7 +431,7 @@ func TestRenameReusesExistingState(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err := reopened.project(p.Name)
-	if err != nil || got != p {
+	if err != nil || !reflect.DeepEqual(got, p) {
 		t.Fatal("rename lost an existing project or its authorizations")
 	}
 	if _, err = os.Stat(carryDir); !os.IsNotExist(err) {

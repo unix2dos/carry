@@ -39,6 +39,11 @@ func validateReferences(p *Project) error {
 			return errors.New("Vercel requires explicit team and project IDs")
 		}
 		ids = append(ids, p.VercelTeam, p.VercelProject)
+	case "vps":
+		if p.hasNeon() || !vpsHostPattern.MatchString(p.VPSHost) || p.VPSPort < 1 || p.VPSPort > 65535 ||
+			(p.VPSDataPath != "" && !validVPSDataPath(p.VPSDataPath)) || !validVPSEnv(p.VPSEnv) {
+			return errors.New("VPS requires a safe SSH host alias, container port and optional absolute data path/non-secret environment")
+		}
 	default:
 		return errors.New("unsupported compute provider")
 	}
@@ -157,7 +162,8 @@ func bundleSource(source, root string, secrets []string) (dir, digest string, co
 			return fmt.Errorf("source contains a symlink: %s; alpha does not follow symlinks", rel)
 		}
 		if d.IsDir() {
-			return os.MkdirAll(filepath.Join(dir, rel), 0700)
+			// The private staging root protects local source; copied image directories must be traversable by non-root app users.
+			return os.MkdirAll(filepath.Join(dir, rel), 0755)
 		}
 		info, e := d.Info()
 		if e != nil || !info.Mode().IsRegular() {
@@ -281,6 +287,50 @@ func (e *Engine) executePublish(ctx context.Context, p Project, op *Operation, w
 	}
 	if wait && !op.terminal() {
 		return e.monitor(ctx, p, op)
+	}
+	return nil
+}
+func (e *Engine) rollbackVPS(ctx context.Context, p Project, op *Operation) error {
+	if p.Provider != "vps" {
+		return e.record(op, "blocked", "rollback currently supports only VPS applications")
+	}
+	current, err := e.Providers.vpsDeployments(ctx, p)
+	if err != nil || len(current) != 1 {
+		e.record(op, "blocked", "current VPS application could not be identified")
+		return errors.New("current VPS application could not be identified")
+	}
+	operations, err := e.Store.operations(p.Name)
+	if err != nil {
+		return err
+	}
+	var prior *Operation
+	for i := range operations {
+		if operations[i].State == "deployed" && operations[i].Marker != current[0].Meta.Message {
+			prior = &operations[i]
+			break
+		}
+	}
+	if prior == nil {
+		return e.record(op, "blocked", "no earlier deployed image is available to restore")
+	}
+	image := vpsImage(p, prior.Marker)
+	if _, err = e.Providers.vpsCall(ctx, p, "image", "inspect", image, "--format", "{{.Id}}"); err != nil {
+		e.record(op, "blocked", "earlier image is not available on the VPS")
+		return err
+	}
+	op.SourceHash, op.SourceFiles = prior.SourceHash, prior.SourceFiles
+	if err = e.record(op, "submitting", "restoring an earlier application image; current environment and data remain in place"); err != nil {
+		return err
+	}
+	submitErr := e.Providers.applyVPSCompose(ctx, p, image, op.Marker)
+	if err = e.record(op, "unknown", "rollback result needs readback"); err != nil {
+		return err
+	}
+	if err = e.reconcileOnce(ctx, p, op); err != nil {
+		return err
+	}
+	if submitErr != nil && op.DeploymentID == "" {
+		return errors.New("rollback outcome is unknown; reconcile before another operation")
 	}
 	return nil
 }
